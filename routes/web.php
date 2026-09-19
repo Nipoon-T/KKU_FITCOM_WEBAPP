@@ -9,4 +9,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
-Route::get('/test', function () {return view('test');});
+Route::get('/test', function () {
+    return view('test');
+});
