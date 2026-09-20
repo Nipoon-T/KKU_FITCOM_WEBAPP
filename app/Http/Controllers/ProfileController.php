@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sport;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function edit()
+    public function edit(): View
     {
         $user = auth()->user();
         $sports = Sport::all();
@@ -18,7 +20,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $request->validate([
             'goal' => 'nullable|string',

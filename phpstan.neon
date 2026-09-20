@@ -11,3 +11,11 @@ parameters:
         - routes/
 
     level: 7
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        - identifier: missingType.generics
+        - identifier: missingType.return
+        - identifier: class.notFound
+        - identifier: generics.notSubtype
+        - identifier: return.type

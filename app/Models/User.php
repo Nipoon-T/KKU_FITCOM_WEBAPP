@@ -7,6 +7,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -60,12 +62,18 @@ class User extends Authenticatable implements PasskeyUser
             : $initials;
     }
 
-    public function profile()
+    /**
+     * @return HasOne<UserProfile, User>
+     */
+    public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
     }
 
-    public function sports()
+    /**
+     * @return BelongsToMany<Sport, User>
+     */
+    public function sports(): BelongsToMany
     {
         return $this->belongsToMany(Sport::class, 'user_sport_preferences');
     }
