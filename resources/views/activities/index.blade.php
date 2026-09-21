@@ -1,6 +1,12 @@
 <x-layouts::app :title="'กิจกรรม'">
     <div class="mx-auto w-full max-w-5xl space-y-6 p-4">
-        <h1 class="text-2xl font-semibold">ค้นหากิจกรรม</h1>
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-semibold">ค้นหากิจกรรม</h1>
+            <div class="flex gap-2">
+                <a href="{{ route('activities.mine') }}" class="rounded border px-4 py-2">กิจกรรมของฉัน</a>
+                <a href="{{ route('activities.create') }}" class="rounded bg-cyan-600 px-4 py-2 text-white">+ สร้างกิจกรรม</a>
+            </div>
+        </div>
 
         <form method="GET" action="{{ route('activities.index') }}" class="flex flex-wrap items-end gap-3">
             <div>
