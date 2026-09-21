@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Activity extends Model
 {
+    public const SKILL_LEVELS = [
+        1 => 'เริ่มต้น',
+        2 => 'ปานกลาง',
+        3 => 'สูง',
+    ];
     protected $fillable = [
         'name',
         'description',
