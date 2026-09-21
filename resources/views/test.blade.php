@@ -1,5 +1,5 @@
 {{-- resources/views/test.blade.php --}}
-@extends('layouts.app')
+@extends('layouts.site')
 
 @section('content')
     <h1>ทดสอบ layout</h1>
