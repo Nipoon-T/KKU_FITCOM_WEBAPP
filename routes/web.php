@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -18,11 +18,15 @@ Route::get('/test', function () {
     return view('test');
 });
 
-Route::middleware(['auth', 'verified'])
-    ->prefix('activities')
-    ->name('activities.')
-    ->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/my-activities', [ActivityController::class, 'myActivities'])->name('activities.mine');
+
+    Route::prefix('activities')->name('activities.')->group(function () {
         Route::get('/', [ActivityController::class, 'index'])->name('index');
+        Route::get('/create', [ActivityController::class, 'create'])->name('create');
+        Route::post('/', [ActivityController::class, 'store'])->name('store');
         Route::get('/{activity}', [ActivityController::class, 'show'])->name('show');
         Route::post('/{activity}/register', [ActivityController::class, 'register'])->name('register');
+        Route::post('/{activity}/checkin', [ActivityController::class, 'checkin'])->name('checkin');
     });
+});

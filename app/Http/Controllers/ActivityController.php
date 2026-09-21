@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\ActivityParticipant;
+use App\Models\Attendance;
+use App\Models\Location;
 use App\Models\Sport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class ActivityController extends Controller
@@ -70,7 +74,7 @@ class ActivityController extends Controller
             return back()->with('status', 'คุณลงทะเบียนกิจกรรมนี้แล้ว');
         }
 
-        if ($activity->date->isBefore(today())) {
+        if (Carbon::parse($activity->date)->isBefore(today())) {
             return back()->withErrors(['activity' => 'กิจกรรมนี้จบไปแล้ว']);
         }
 
@@ -89,5 +93,87 @@ class ActivityController extends Controller
         );
 
         return back()->with('status', 'ลงทะเบียนสำเร็จ');
+    }
+
+    public function create(): View
+    {
+        return view('activities.create', [
+            'sports' => Sport::orderBy('name')->get(),
+            'locations' => Location::orderBy('name')->get(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'sport_id' => ['required', 'exists:sports,id'],
+            'location_id' => ['nullable', 'required_without:new_location_name', 'exists:locations,id'],
+            'new_location_name' => ['nullable', 'required_without:location_id', 'string', 'max:255'],
+            'new_location_address' => ['nullable', 'string', 'max:255'],
+            'skill_level' => ['required', 'integer', 'between:1,3'],
+            'date' => ['required', 'date', 'after_or_equal:today'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'max_participants' => ['required', 'integer', 'min:1', 'max:1000'],
+        ]);
+
+        $locationId = $data['location_id'] ?? null;
+
+        if (! empty($data['new_location_name'])) {
+            $locationId = Location::create([
+                'name' => $data['new_location_name'],
+                'address' => $data['new_location_address'] ?? null,
+            ])->id;
+        }
+
+        $activity = Activity::create([
+            ...Arr::except($data, ['location_id', 'new_location_name', 'new_location_address']),
+            'location_id' => $locationId,
+            'created_by' => auth()->id(),
+        ]);
+
+        return redirect()->route('activities.show', $activity)->with('status', 'สร้างกิจกรรมสำเร็จ');
+    }
+
+    public function myActivities(): View
+    {
+        $activities = Activity::query()
+            ->where('created_by', auth()->id())
+            ->with([
+                'sport',
+                'location',
+                'participants' => fn ($query) => $query
+                    ->where('status', 'registered')
+                    ->with(['user', 'attendance']),
+            ])
+            ->orderByDesc('date')
+            ->orderBy('start_time')
+            ->get();
+
+        return view('activities.manage', ['activities' => $activities]);
+    }
+
+    public function checkin(Request $request, Activity $activity): RedirectResponse
+    {
+        abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
+
+        $data = $request->validate([
+            'participant_id' => ['required', 'integer'],
+        ]);
+
+        $participant = $activity->participants()
+            ->where('status', 'registered')
+            ->findOrFail((int) $data['participant_id']);
+
+        Attendance::firstOrCreate(
+            ['activity_participant_id' => $participant->id],
+            ['checked_in_at' => now(), 'checked_by' => auth()->id()],
+        );
+
+        // TODO (คนที่ 5): เรียกให้แต้มตรงนี้ หลังตกลงกันว่าจะเป็น Service หรือ Event
+
+        return back()->with('status', 'เช็คชื่อสำเร็จ');
     }
 }

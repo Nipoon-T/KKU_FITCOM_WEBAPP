@@ -13,6 +13,7 @@ class Activity extends Model
         2 => 'ปานกลาง',
         3 => 'สูง',
     ];
+
     protected $fillable = [
         'name',
         'description',
