@@ -43,7 +43,7 @@ class SecurityTest extends TestCase
             ->get(route('security.edit'));
 
         $response->assertOk();
-
+        dd($response->getContent());
         /* @chisel-passkeys */
         $response->assertSee('Passkeys');
         $response->assertSee('No passkeys yet');
