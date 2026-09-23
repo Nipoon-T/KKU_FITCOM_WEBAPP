@@ -1,0 +1,10 @@
+[33m0fc6599[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Merge pull request #3 from Nipoon-T/feature/auth-profile
+[33m0dc2db1[m[33m ([m[1;31morigin/feature/auth-profile[m[33m)[m แก้ไข layout ให้แยกจาก Flux, แก้ PHPStan errors ทั้งหมด
+[33mff76dcc[m แก้ code style ตาม Laravel Pint
+[33m34e6924[m เพิ่มระบบโปรไฟล์: migration, model, controller, route, view สำหรับ user_profiles และ sports
+[33maddfbaa[m[33m ([m[1;31morigin/Opor[m[33m)[m Add locations table and model
+[33mf854b2b[m Merge pull request #2 from Nipoon-T/gam
+[33m3e9f1f9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mgam[m[33m, [m[1;31morigin/gam[m[33m)[m แก้ code style ตาม Laravel Pint
+[33m2ba420e[m แก้ CSS syntax error ใน app.css (ลบ comment ที่ parser อ่านไม่ผ่าน)
+[33m9a024ab[m Merge pull request #1 from Nipoon-T/gam
+[33m90e6f98[m add header in app.blade.php
