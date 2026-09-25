@@ -23,7 +23,7 @@ class Sport extends Model
         return $this->belongsToMany(User::class, 'user_sport_preferences');
     }
 
-        /**
+    /**
      * @return HasMany<Community, $this>
      */
     public function communities(): HasMany

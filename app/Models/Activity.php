@@ -71,6 +71,4 @@ class Activity extends Model
     {
         return $this->hasMany(ActivityParticipant::class);
     }
-
-    
 }
