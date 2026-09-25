@@ -41,6 +41,14 @@ class Activity extends Model
     }
 
     /**
+     * @return BelongsTo<Community, $this>
+     */
+    public function community(): BelongsTo
+    {
+        return $this->belongsTo(Community::class);
+    }
+
+    /**
      * @return BelongsTo<Location, $this>
      */
     public function location(): BelongsTo
@@ -63,4 +71,6 @@ class Activity extends Model
     {
         return $this->hasMany(ActivityParticipant::class);
     }
+
+    
 }
