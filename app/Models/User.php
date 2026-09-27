@@ -86,4 +86,34 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->belongsToMany(Sport::class, 'user_sport_preferences');
     }
+
+    /**
+     * @return HasMany<PointLog, $this>
+     */
+    public function pointLogs(): HasMany
+    {
+        return $this->hasMany(PointLog::class);
+    }
+
+    /**
+     * @return HasOne<Streak, $this>
+     */
+    public function streak(): HasOne
+    {
+        return $this->hasOne(Streak::class);
+    }
+
+    /**
+     * @return BelongsToMany<Badge, $this>
+     */
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot('earned_at');
+    }
+
+    public function totalPoints(): int
+    {
+        return (int) $this->pointLogs()->sum('points_change');
+    }
 }
