@@ -84,7 +84,7 @@
 
     @if ((int) $activity->created_by === (int) auth()->id())
         <p>
-            <a href="{{ route('activities.mine') }}">จัดการผู้เข้าร่วมและเช็คชื่อ</a>
+            <a href="{{ route('activities.attendance', $activity) }}">จัดการผู้เข้าร่วมและเช็คชื่อ</a>
         </p>
     @endif
     <script>
