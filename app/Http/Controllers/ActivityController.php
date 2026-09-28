@@ -189,7 +189,9 @@ class ActivityController extends Controller
             ->with(['user', 'attendance'])
             ->get();
 
-        return view('activities.attendance', compact('activity', 'participants'));
+        $canCheckin = $this->isActivityDay($activity);
+
+        return view('activities.attendance', compact('activity', 'participants', 'canCheckin'));
     }
 
     // checkin เช็คชื่อผู้เข้าร่วม (เฉพาะเจ้าของกิจกรรม)
@@ -204,6 +206,10 @@ class ActivityController extends Controller
         $participant = $activity->participants()
             ->where('status', 'registered')
             ->findOrFail((int) $validated['participant_id']);
+            
+        if (! $this->isActivityDay($activity)) {
+            return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรม');
+        }
 
         $attendance = Attendance::firstOrCreate(
             ['activity_participant_id' => $participant->id],
@@ -224,5 +230,18 @@ class ActivityController extends Controller
         }
 
         return back()->with('success', 'เช็คชื่อสำเร็จ');
+    }
+        private function isActivityDay(Activity $activity): bool
+    {
+        return Carbon::parse($activity->date)->toDateString() === now('Asia/Bangkok')->toDateString();
+    }
+
+    private function checkinDenied(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => false, 'message' => $message], 422);
+        }
+
+        return back()->withErrors(['checkin' => $message]);
     }
 }

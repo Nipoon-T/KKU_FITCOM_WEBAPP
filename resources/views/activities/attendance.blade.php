@@ -15,12 +15,20 @@
         <p>{{ session('success') }}</p>
     @endif
 
+    @if ($errors->any())
+        <p>{{ $errors->first() }}</p>
+    @endif
+
     <p>
         {{ $activity->sport->name }}
         | {{ $activity->date->format('d/m/Y') }}
         {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}
         | {{ $activity->location->name }}
     </p>
+
+    @unless ($canCheckin)
+        <p>เช็คชื่อได้เฉพาะวันที่จัดกิจกรรม ({{ $activity->date->format('d/m/Y') }})</p>
+    @endunless
 
     <p>
         เช็คชื่อแล้ว
@@ -36,12 +44,14 @@
 
             @if ($participant->attendance)
                 — เช็คชื่อแล้ว {{ $participant->attendance->checked_in_at->timezone('Asia/Bangkok')->format('H:i') }}
-            @else
+            @elseif ($canCheckin)
                 <form action="{{ route('activities.checkin', $activity) }}" method="POST" class="checkin-form" style="display:inline">
                     @csrf
                     <input type="hidden" name="participant_id" value="{{ $participant->id }}">
                     <button type="submit">เช็คชื่อ</button>
                 </form>
+            @else
+                — ยังไม่ได้เช็คชื่อ
             @endif
         </div>
     @empty
@@ -67,7 +77,15 @@
 
                 if (!response.ok) {
                     button.disabled = false;
-                    alert('เช็คชื่อไม่สำเร็จ ลองใหม่อีกครั้ง');
+
+                    let message = 'เช็คชื่อไม่สำเร็จ ลองใหม่อีกครั้ง';
+                    try {
+                        message = (await response.json()).message || message;
+                    } catch (e) {
+                        // ไม่ใช่ JSON ใช้ข้อความเริ่มต้น
+                    }
+
+                    alert(message);
                     return;
                 }
 
