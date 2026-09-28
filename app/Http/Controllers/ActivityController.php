@@ -206,7 +206,7 @@ class ActivityController extends Controller
         $participant = $activity->participants()
             ->where('status', 'registered')
             ->findOrFail((int) $validated['participant_id']);
-            
+
         if (! $this->isActivityDay($activity)) {
             return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรม');
         }
@@ -231,7 +231,8 @@ class ActivityController extends Controller
 
         return back()->with('success', 'เช็คชื่อสำเร็จ');
     }
-        private function isActivityDay(Activity $activity): bool
+
+    private function isActivityDay(Activity $activity): bool
     {
         return Carbon::parse($activity->date)->toDateString() === now('Asia/Bangkok')->toDateString();
     }
