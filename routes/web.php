@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
     Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
+    Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
     Route::post('/activities/{activity}/register', [ActivityController::class, 'register'])->name('activities.register');
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
 });

@@ -34,25 +34,12 @@
                 | {{ $activity->location->name }}
             </p>
 
-            <p>Participants: {{ $activity->participants->count() }}/{{ $activity->max_participants }}</p>
+            <p>
+                Participants: {{ $activity->registered_count }}/{{ $activity->max_participants }}
+                | เช็คชื่อแล้ว: {{ $activity->checked_count }}/{{ $activity->registered_count }}
+            </p>
 
-            @forelse ($activity->participants as $participant)
-                <div>
-                    {{ $participant->user->name }}
-
-                    @if ($participant->attendance)
-                        — เช็คชื่อแล้ว {{ $participant->attendance->checked_in_at->timezone('Asia/Bangkok')->format('H:i') }}
-                    @else
-                        <form action="{{ route('activities.checkin', $activity) }}" method="POST" style="display:inline">
-                            @csrf
-                            <input type="hidden" name="participant_id" value="{{ $participant->id }}">
-                            <button type="submit">เช็คชื่อ</button>
-                        </form>
-                    @endif
-                </div>
-            @empty
-                <p>ยังไม่มีผู้ลงทะเบียน</p>
-            @endforelse
+            <a href="{{ route('activities.attendance', $activity) }}">เช็คชื่อผู้เข้าร่วม</a>
         </div>
         <hr>
     @empty

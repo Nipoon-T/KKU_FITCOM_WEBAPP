@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Community;
 use App\Models\Location;
 use App\Models\Sport;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -123,43 +124,53 @@ class ActivityController extends Controller
     }
 
     // register กดเข้าร่วมกิจกรรม
-    public function register(Activity $activity): RedirectResponse
+    public function register(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
 
         $existing = $activity->participants()->where('user_id', $userId)->first();
 
         if ($existing?->status === 'registered') {
-            return back()->with('success', 'คุณลงทะเบียนกิจกรรมนี้แล้ว');
+            return $this->registerResult($request, 'คุณลงทะเบียนกิจกรรมนี้แล้ว', true);
         }
 
         if (Carbon::parse($activity->date)->isBefore(today())) {
-            return back()->withErrors(['activity' => 'กิจกรรมนี้จบไปแล้ว']);
+            return $this->registerResult($request, 'กิจกรรมนี้จบไปแล้ว', false);
         }
 
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
 
         if ($registeredCount >= $activity->max_participants) {
-            return back()->withErrors(['activity' => 'กิจกรรมนี้เต็มแล้ว']);
+            return $this->registerResult($request, 'กิจกรรมนี้เต็มแล้ว', false);
         }
 
-        // ตาราง unique (activity_id, user_id) ถ้าเคยสมัครแล้วยกเลิก ให้อัปเดตแถวเดิม
         ActivityParticipant::updateOrCreate(
             ['activity_id' => $activity->id, 'user_id' => $userId],
             ['status' => 'registered', 'registered_at' => now()],
         );
 
-        return back()->with('success', 'ลงทะเบียนสำเร็จ');
+        return $this->registerResult($request, 'ลงทะเบียนสำเร็จ', true, $registeredCount + 1);
     }
 
-    // myActivities หน้าจัดการกิจกรรมที่ตัวเองสร้าง
+    private function registerResult(Request $request, string $message, bool $ok, ?int $count = null): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok, 'message' => $message, 'count' => $count], $ok ? 200 : 422);
+        }
+
+        return $ok
+            ? back()->with('success', $message)
+            : back()->withErrors(['activity' => $message]);
+    }
+
+    // myActivities หน้ารวมกิจกรรมที่ตัวเองสร้าง
     public function myActivities(): View
     {
         $activities = Activity::where('created_by', auth()->id())
-            ->with([
-                'sport',
-                'location',
-                'participants' => fn ($q) => $q->where('status', 'registered')->with(['user', 'attendance']),
+            ->with(['sport', 'location'])
+            ->withCount([
+                'participants as registered_count' => fn ($q) => $q->where('status', 'registered'),
+                'participants as checked_count' => fn ($q) => $q->where('status', 'registered')->whereHas('attendance'),
             ])
             ->orderByDesc('date')
             ->get();
@@ -167,8 +178,22 @@ class ActivityController extends Controller
         return view('activities.manage', compact('activities'));
     }
 
+    public function attendance(Activity $activity): View
+    {
+        abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
+
+        $activity->load(['sport', 'location']);
+
+        $participants = $activity->participants()
+            ->where('status', 'registered')
+            ->with(['user', 'attendance'])
+            ->get();
+
+        return view('activities.attendance', compact('activity', 'participants'));
+    }
+
     // checkin เช็คชื่อผู้เข้าร่วม (เฉพาะเจ้าของกิจกรรม)
-    public function checkin(Request $request, Activity $activity): RedirectResponse
+    public function checkin(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
 
@@ -188,6 +213,14 @@ class ActivityController extends Controller
         if ($attendance->wasRecentlyCreated) {
             // TODO (คนที่ 5): ให้แต้ม (PointLog) / อัปเดต Streak / เช็ค Badge ตรงนี้
             // ทำเฉพาะตอนเช็คชื่อครั้งแรก จะได้ไม่ให้แต้มซ้ำ
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'เช็คชื่อสำเร็จ',
+                'time' => Carbon::parse($attendance->checked_in_at)->timezone('Asia/Bangkok')->format('H:i'),
+            ]);
         }
 
         return back()->with('success', 'เช็คชื่อสำเร็จ');
