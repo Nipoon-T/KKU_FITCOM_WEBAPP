@@ -27,16 +27,19 @@ class GamificationService
             return;
         }
 
-        DB::transaction(function () use ($attendance, $participant, $user): void {
+        $checkedInAt = CarbonImmutable::parse($attendance->checked_in_at);
+
+        DB::transaction(function () use ($participant, $user, $checkedInAt): void {
             PointLog::create([
                 'user_id' => $user->id,
                 'activity_id' => $participant->activity_id,
                 'points_change' => self::POINTS_PER_ACTIVITY,
                 'reason' => 'เข้าร่วมกิจกรรมสำเร็จ',
+                'created_at' => $checkedInAt,
             ]);
 
-            $this->updateStreak($user, CarbonImmutable::parse($attendance->checked_in_at));
-            $this->checkBadges($user);
+            $this->updateStreak($user, $checkedInAt);
+            $this->checkBadges($user, $checkedInAt);
         });
     }
 
@@ -66,7 +69,7 @@ class GamificationService
         $streak->save();
     }
 
-    private function checkBadges(User $user): void
+    private function checkBadges(User $user, CarbonInterface $earnedAt): void
     {
         $totalActivities = Attendance::whereHas(
             'participant',
@@ -86,7 +89,7 @@ class GamificationService
             };
 
             if ($value !== null && $value >= $badge->condition_value) {
-                $user->badges()->attach($badge->id, ['earned_at' => now()]);
+                $user->badges()->attach($badge->id, ['earned_at' => $earnedAt]);
             }
         }
     }
