@@ -7,6 +7,7 @@ use App\Models\Badge;
 use App\Models\PointLog;
 use App\Models\Streak;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +35,7 @@ class GamificationService
                 'reason' => 'เข้าร่วมกิจกรรมสำเร็จ',
             ]);
 
-            $this->updateStreak($user, $attendance->checked_in_at);
+            $this->updateStreak($user, CarbonImmutable::parse($attendance->checked_in_at));
             $this->checkBadges($user);
         });
     }
