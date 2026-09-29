@@ -2,9 +2,17 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $current_streak
+ * @property int $longest_streak
+ * @property CarbonInterface|null $last_activity_date
+ */
 class Streak extends Model
 {
     public $timestamps = false;
