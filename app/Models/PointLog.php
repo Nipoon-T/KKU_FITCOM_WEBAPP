@@ -2,9 +2,18 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $activity_id
+ * @property int $points_change
+ * @property string $reason
+ * @property CarbonInterface|null $created_at
+ */
 class PointLog extends Model
 {
     public $timestamps = false;

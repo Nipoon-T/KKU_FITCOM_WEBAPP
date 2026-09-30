@@ -1,14 +1,17 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'member'])->name('dashboard');
 
     Route::get('/profile/setup', [ProfileController::class, 'edit'])->name('profile.setup');
     Route::post('/profile/setup', [ProfileController::class, 'update'])->name('profile.update');
@@ -39,6 +42,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/activities/{activity}/register', [ActivityController::class, 'register'])->name('activities.register');
     Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__.'/settings.php';
