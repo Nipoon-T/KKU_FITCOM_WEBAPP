@@ -30,6 +30,7 @@
             <label for="bio">เกี่ยวกับฉัน</label><br>
             <textarea name="bio" id="bio" style="width: 100%; padding: 8px;">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
         </div>
+
         <div style="margin-bottom: 15px;">
             <label>กีฬาที่สนใจ (เลือกได้หลายอัน)</label><br>
             @php

@@ -23,5 +23,6 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(SportSeeder::class);
+        $this->call(BadgeSeeder::class);
     }
 }

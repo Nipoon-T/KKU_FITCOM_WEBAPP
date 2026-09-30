@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -51,6 +52,14 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * @return HasMany<Community, $this>
+     */
+    public function createdCommunities(): HasMany
+    {
+        return $this->hasMany(Community::class, 'created_by');
+    }
+
+    /**
      * Get the user's initials
      */
     public function initials(): string
@@ -76,5 +85,35 @@ class User extends Authenticatable implements PasskeyUser
     public function sports(): BelongsToMany
     {
         return $this->belongsToMany(Sport::class, 'user_sport_preferences');
+    }
+
+    /**
+     * @return HasMany<PointLog, $this>
+     */
+    public function pointLogs(): HasMany
+    {
+        return $this->hasMany(PointLog::class);
+    }
+
+    /**
+     * @return HasOne<Streak, $this>
+     */
+    public function streak(): HasOne
+    {
+        return $this->hasOne(Streak::class);
+    }
+
+    /**
+     * @return BelongsToMany<Badge, $this>
+     */
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withPivot('earned_at');
+    }
+
+    public function totalPoints(): int
+    {
+        return (int) $this->pointLogs()->sum('points_change');
     }
 }
