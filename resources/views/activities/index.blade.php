@@ -3,36 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activities</title>
+    <title>KKU FitCom - Activities</title>
 </head>
 <body>
 
-    <h1>Activities</h1>
+    <h1>KKU FitCom</h1>
 
-    <a href="{{ route('activities.create') }}">Create Activity</a>
+    <a href="{{ route('activities.create') }}">สร้างกิจกรรม</a>
     |
-    <a href="{{ route('activities.mine') }}">My Activities</a>
+    <a href="{{ route('activities.mine') }}">จัดการกิจกรรมของฉัน</a>
 
     <form method="GET" action="{{ route('activities.index') }}" id="filter-form">
-        <select name="sport">
-            <option value="">ทุกกีฬา</option>
+
+        <div>
+            <input type="text" name="q" value="{{ request('q') }}" placeholder="ค้นหากิจกรรม & คอมมูนิตี้ที่คุณชอบ" size="40">
+        </div>
+
+        <fieldset>
+            <legend>ประเภทกิจกรรม</legend>
+            <label>
+                <input type="radio" name="sport" value="" {{ request('sport') == '' ? 'checked' : '' }}>
+                ทั้งหมด
+            </label>
             @foreach ($sports as $sport)
-                <option value="{{ $sport->id }}" {{ request('sport') == $sport->id ? 'selected' : '' }}>
+                <label>
+                    <input type="radio" name="sport" value="{{ $sport->id }}" {{ request('sport') == $sport->id ? 'checked' : '' }}>
                     {{ $sport->name }}
-                </option>
+                </label>
             @endforeach
-        </select>
+        </fieldset>
 
-        <input type="date" name="date" value="{{ request('date') }}">
+        <fieldset>
+            <legend>วันที่</legend>
+            <input type="date" name="date" value="{{ request('date') }}">
+        </fieldset>
 
-        <select name="level">
-            <option value="">ทุกระดับ</option>
+        <fieldset>
+            <legend>ช่วงเวลา</legend>
+            <input type="time" name="from" value="{{ request('from') }}">
+            ถึง
+            <input type="time" name="to" value="{{ request('to') }}">
+        </fieldset>
+
+        <fieldset>
+            <legend>ระดับกิจกรรม</legend>
+            <label>
+                <input type="radio" name="level" value="" {{ request('level') == '' ? 'checked' : '' }}>
+                ทั้งหมด
+            </label>
             @foreach ($levels as $value => $label)
-                <option value="{{ $value }}" {{ request('level') == $value ? 'selected' : '' }}>
+                <label>
+                    <input type="radio" name="level" value="{{ $value }}" {{ request('level') == $value ? 'checked' : '' }}>
                     {{ $label }}
-                </option>
+                </label>
             @endforeach
-        </select>
+        </fieldset>
+
+        <fieldset>
+            <legend>สถานที่</legend>
+            <input type="text" name="location" value="{{ request('location') }}" placeholder="เช่น มหาวิทยาลัยขอนแก่น" size="40">
+        </fieldset>
 
         <button type="submit">ค้นหา</button>
     </form>
@@ -40,35 +70,39 @@
     <hr>
 
     <div id="activity-list">
+        <h2>กิจกรรมที่พบ ({{ $activities->count() }})</h2>
+
         @forelse ($activities as $activity)
             <div>
-                <h2>
-                    <a href="{{ route('activities.show', $activity) }}">
-                        {{ $activity->name }}
-                    </a>
-                </h2>
+                <h3>{{ $activity->name }}</h3>
+
+                @if ($activity->description)
+                    <p>{{ \Illuminate\Support\Str::limit($activity->description, 100) }}</p>
+                @endif
 
                 <p>
-                    Sport: {{ $activity->sport->name }}
-                    | Level: {{ $levels[$activity->skill_level] ?? '-' }}
+                    ประเภท: {{ $activity->sport->name }}
+                    | ระดับ: {{ $levels[$activity->skill_level] ?? '-' }}
                 </p>
 
                 <p>
-                    Date: {{ $activity->date->format('d/m/Y') }}
+                    วันที่: {{ $activity->date->format('d/m/Y') }}
                     {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}
                 </p>
 
-                <p>Location: {{ $activity->location->name }}</p>
+                <p>สถานที่: {{ $activity->location->name }}</p>
 
                 @if ($activity->community)
-                    <p>Community: {{ $activity->community->name }}</p>
+                    <p>กลุ่ม: {{ $activity->community->name }}</p>
                 @endif
 
-                <p>Participants: {{ $activity->registered_count }}/{{ $activity->max_participants }}</p>
+                <p>เข้าร่วมแล้ว: {{ $activity->registered_count }}/{{ $activity->max_participants }}</p>
+
+                <a href="{{ route('activities.show', $activity) }}">ดูรายละเอียด</a>
             </div>
             <hr>
         @empty
-            <p>No activities found.</p>
+            <p>ไม่พบกิจกรรม</p>
         @endforelse
     </div>
 
@@ -77,7 +111,7 @@
         const activityList = document.getElementById('activity-list');
 
         async function loadActivities() {
-            // เอาเฉพาะช่องที่มีค่า จะได้ URL สะอาด เช่น /activities?sport=1
+            // เอาเฉพาะช่องที่มีค่า จะได้ URL สะอาด เช่น /activities?sport=1&date=2026-10-01
             const params = new URLSearchParams();
             new FormData(filterForm).forEach((value, key) => {
                 if (value !== '') {
@@ -110,8 +144,18 @@
             loadActivities();
         });
 
-        filterForm.querySelectorAll('select, input').forEach((field) => {
-            field.addEventListener('change', loadActivities);
+        let typingTimer;
+
+        filterForm.querySelectorAll('input').forEach((field) => {
+            if (field.type === 'text') {
+                // ช่องพิมพ์ รอให้หยุดพิมพ์ครู่หนึ่งก่อนค่อยค้นหา
+                field.addEventListener('input', () => {
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(loadActivities, 300);
+                });
+            } else {
+                field.addEventListener('change', loadActivities);
+            }
         });
     </script>
 

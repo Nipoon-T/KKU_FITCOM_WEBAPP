@@ -27,12 +27,18 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/my-activities', [ActivityController::class, 'myActivities'])->name('activities.mine');
+
     Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
+    // /activities/create ต้องอยู่ก่อน /activities/{activity} เสมอ ไม่งั้นจะ 404
     Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
     Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
-    Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
+    Route::get('/activities/{activity}/edit', [ActivityController::class, 'edit'])->name('activities.edit');
+    Route::put('/activities/{activity}', [ActivityController::class, 'update'])->name('activities.update');
+    Route::delete('/activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
     Route::post('/activities/{activity}/register', [ActivityController::class, 'register'])->name('activities.register');
+    Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
 });
+
 require __DIR__.'/settings.php';

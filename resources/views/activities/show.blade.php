@@ -7,11 +7,9 @@
 </head>
 <body>
 
-    <a href="{{ route('activities.index') }}">
-        ← Back to Activities
-    </a>
+    <a href="{{ route('activities.index') }}">← กลับ</a>
 
-    <h1>{{ $activity->name }}</h1>
+    <h1>รายละเอียดกิจกรรม</h1>
 
     @if (session('success'))
         <p>{{ session('success') }}</p>
@@ -21,35 +19,37 @@
         <p>{{ $errors->first() }}</p>
     @endif
 
-    <p>
-        <strong>Description:</strong>
-        {{ $activity->description ?: 'No description.' }}
-    </p>
+    <h2>{{ $activity->name }}</h2>
+
+    <p>{{ $activity->description ?: 'ไม่มีคำอธิบาย' }}</p>
 
     <p>
-        <strong>Sport:</strong>
-        {{ $activity->sport->name }}
-    </p>
-
-    <p>
-        <strong>Level:</strong>
-        {{ $levels[$activity->skill_level] ?? '-' }}
-    </p>
-
-    <p>
-        <strong>Date:</strong>
+        <strong>วันจัดกิจกรรม:</strong>
         {{ $activity->date->format('d/m/Y') }}
         {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}
     </p>
 
     <p>
-        <strong>Location:</strong>
+        <strong>สถานที่:</strong>
         {{ $activity->location->name }}
+        @if ($activity->location->address)
+            ({{ $activity->location->address }})
+        @endif
+    </p>
+
+    <p>
+        <strong>ประเภทกิจกรรม:</strong>
+        {{ $activity->sport->name }}
+    </p>
+
+    <p>
+        <strong>ระดับกิจกรรม:</strong>
+        {{ $levels[$activity->skill_level] ?? '-' }}
     </p>
 
     @if ($activity->community)
         <p>
-            <strong>Community:</strong>
+            <strong>กลุ่ม:</strong>
             <a href="{{ route('community.show', $activity->community) }}">
                 {{ $activity->community->name }}
             </a>
@@ -57,19 +57,19 @@
     @endif
 
     <p>
-        <strong>Created by:</strong>
+        <strong>ผู้จัด:</strong>
         {{ $activity->creator->name }}
     </p>
 
     <p>
-        <strong>Participants:</strong>
+        <strong>ผู้เข้าร่วม:</strong>
         <span id="participant-count">{{ $registeredCount }}</span>/{{ $activity->max_participants }}
     </p>
 
     <hr>
 
     @if ($myParticipation?->status === 'registered')
-        <p>ลงทะเบียนแล้ว</p>
+        <p>เข้าร่วมแล้ว</p>
     @elseif ($activity->date->lt(today()))
         <p>กิจกรรมนี้จบไปแล้ว</p>
     @elseif ($registeredCount >= $activity->max_participants)
@@ -83,10 +83,17 @@
     @endif
 
     @if ((int) $activity->created_by === (int) auth()->id())
+        <hr>
+        <p>สำหรับผู้จัดกิจกรรม</p>
         <p>
-            <a href="{{ route('activities.attendance', $activity) }}">จัดการผู้เข้าร่วมและเช็คชื่อ</a>
+            @unless ($activity->date->lt(today()))
+                <a href="{{ route('activities.edit', $activity) }}">แก้ไขกิจกรรม</a>
+                |
+            @endunless
+            <a href="{{ route('activities.attendance', $activity) }}">เช็คชื่อผู้เข้าร่วม</a>
         </p>
     @endif
+
     <script>
         const form = document.getElementById('register-form');
 
@@ -112,7 +119,7 @@
                     }
 
                     form.replaceWith(Object.assign(document.createElement('p'), {
-                        textContent: 'ลงทะเบียนแล้ว',
+                        textContent: 'เข้าร่วมแล้ว',
                     }));
                 } else {
                     message.textContent = data.message;
@@ -120,5 +127,6 @@
             });
         }
     </script>
+
 </body>
 </html>
