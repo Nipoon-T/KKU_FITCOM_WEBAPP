@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -90,7 +91,7 @@ class ActivityController extends Controller
         $validated = $request->validate($this->rules());
 
         $activity = Activity::create([
-            ...$this->activityData($validated),
+            ...$this->activityData($request, $validated),
             'created_by' => auth()->id(),
         ]);
 
@@ -137,7 +138,7 @@ class ActivityController extends Controller
 
         $validated = $request->validate($rules);
 
-        $activity->update($this->activityData($validated));
+        $activity->update($this->activityData($request, $validated, $activity));
 
         return redirect()
             ->route('activities.show', $activity)
@@ -156,6 +157,10 @@ class ActivityController extends Controller
 
         if ($hasAttendance) {
             return back()->withErrors(['activity' => 'ลบไม่ได้ เพราะมีการเช็คชื่อแล้ว']);
+        }
+
+        if ($activity->cover_image) {
+            Storage::disk('public')->delete($activity->cover_image);
         }
 
         $activity->delete();
@@ -250,8 +255,7 @@ class ActivityController extends Controller
         );
 
         if ($attendance->wasRecentlyCreated) {
-            // TODO (คนที่ 5): ให้แต้ม (PointLog) / อัปเดต Streak / เช็ค Badge ตรงนี้
-            // ทำเฉพาะตอนเช็คชื่อครั้งแรก จะได้ไม่ให้แต้มซ้ำ
+            // การให้แต้ม/streak/badge ทำงานอัตโนมัติผ่าน AttendanceObserver (คนที่ 5) แล้ว
         }
 
         if ($request->expectsJson()) {
@@ -290,12 +294,12 @@ class ActivityController extends Controller
         return [
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:300'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'],
             'sport_id' => ['required', 'exists:sports,id'],
             // เลือกได้เฉพาะ community ที่ตัวเองเป็นคนสร้าง
             'community_id' => ['nullable', Rule::exists('communities', 'id')->where('created_by', auth()->id())],
-            'location_id' => ['nullable', 'required_without:new_location_name', 'exists:locations,id'],
-            'new_location_name' => ['nullable', 'required_without:location_id', 'string', 'max:255'],
-            'new_location_address' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['required', 'exists:locations,id'],
             'skill_level' => ['required', 'integer', 'between:1,3'],
             'date' => ['required', 'date', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
@@ -306,28 +310,34 @@ class ActivityController extends Controller
 
     /**
      * แปลงข้อมูลที่ผ่าน validation เป็นฟิลด์ของตาราง activities
-     * (ถ้ากรอกสถานที่ใหม่ จะสร้างสถานที่แล้วใช้อันนั้น)
+     * (ถ้าอัปโหลดรูปใหม่ จะลบรูปเก่าทิ้งแล้วใช้รูปใหม่แทน)
      *
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
-    private function activityData(array $validated): array
+    private function activityData(Request $request, array $validated, ?Activity $activity = null): array
     {
-        $locationId = $validated['location_id'] ?? null;
+        $coverImage = $activity?->cover_image;
+        $coverPosition = $validated['cover_position'] ?? $activity?->cover_position ?? '50% 50%';
 
-        if (! empty($validated['new_location_name'])) {
-            $locationId = Location::create([
-                'name' => $validated['new_location_name'],
-                'address' => $validated['new_location_address'] ?? null,
-            ])->id;
+        if ($request->hasFile('cover_image')) {
+            if ($coverImage) {
+                Storage::disk('public')->delete($coverImage);
+            }
+
+            $coverImage = $request->file('cover_image')->store('activities', 'public');
+            // อัปโหลดรูปใหม่ ให้เริ่มที่กึ่งกลางใหม่เสมอ ตำแหน่งเดิมใช้กับรูปเก่าไม่ได้แล้ว
+            $coverPosition = $validated['cover_position'] ?? '50% 50%';
         }
 
         return [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'cover_image' => $coverImage,
+            'cover_position' => $coverPosition,
             'sport_id' => $validated['sport_id'],
             'community_id' => $validated['community_id'] ?? null,
-            'location_id' => $locationId,
+            'location_id' => $validated['location_id'],
             'skill_level' => $validated['skill_level'],
             'date' => $validated['date'],
             'start_time' => $validated['start_time'],
