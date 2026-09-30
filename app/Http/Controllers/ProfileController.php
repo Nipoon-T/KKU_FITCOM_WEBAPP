@@ -27,6 +27,8 @@ class ProfileController extends Controller
             'skill_level' => 'nullable|string',
             'preferred_location' => 'nullable|string',
             'bio' => 'nullable|string',
+            'sports' => 'nullable|array',
+            'sports.*' => 'exists:sports,id',
         ]);
 
         $user = auth()->user();
@@ -35,6 +37,8 @@ class ProfileController extends Controller
             ['user_id' => $user->id],
             $request->only(['goal', 'skill_level', 'preferred_location', 'bio'])
         );
+
+        $user->sports()->sync($request->input('sports', []));
 
         return redirect()->route('profile.setup')->with('status', 'บันทึกโปรไฟล์สำเร็จ');
     }
