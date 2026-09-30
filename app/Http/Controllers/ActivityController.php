@@ -88,7 +88,7 @@ class ActivityController extends Controller
     // store เก็บข้อมูลกิจกรรม
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->rules());
+        $validated = $request->validate($this->rules(requireCover: true));
 
         $activity = Activity::create([
             ...$this->activityData($request, $validated),
@@ -289,12 +289,12 @@ class ActivityController extends Controller
      *
      * @return array<string, array<int, mixed>>
      */
-    private function rules(): array
+    private function rules(bool $requireCover = false): array
     {
         return [
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:300'],
-            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'cover_image' => [$requireCover ? 'required' : 'nullable', 'image', 'max:5120'],
             'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'],
             'sport_id' => ['required', 'exists:sports,id'],
             // เลือกได้เฉพาะ community ที่ตัวเองเป็นคนสร้าง
@@ -318,8 +318,7 @@ class ActivityController extends Controller
     private function activityData(Request $request, array $validated, ?Activity $activity = null): array
     {
         $coverImage = $activity?->cover_image;
-        $coverPosition = $validated['cover_position'] ?? $activity?->cover_position ?? '50% 50%';
-
+        $coverPosition = $validated['cover_position'] ?? $activity->cover_position ?? '50% 50%';
         if ($request->hasFile('cover_image')) {
             if ($coverImage) {
                 Storage::disk('public')->delete($coverImage);

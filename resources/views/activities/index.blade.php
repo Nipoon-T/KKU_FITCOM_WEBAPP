@@ -111,8 +111,7 @@
 
                     <span class="act-tag">{{ $activity->sport->name }} · {{ $levels[$activity->skill_level] ?? '-' }}</span>
 
-                    <p>📅 {{ $activity->date->format('d/m/Y') }} {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}</p>
-                    <p>📍 {{ $activity->location->name }}</p>
+                    <p>📅 {{ $activity->date->format('d/m/Y') }} {{ substr($activity->start_time, 0, 5) }} น. - {{ substr($activity->end_time, 0, 5) }} น.</p>                    <p>📍 {{ $activity->location->name }}</p>
 
                     @if ($activity->community)
                         <p>👥 {{ $activity->community->name }}</p>

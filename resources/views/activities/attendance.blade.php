@@ -43,7 +43,7 @@
     <div class="info-card">
         {{ $activity->sport->name }}
         · {{ $activity->date->format('d/m/Y') }}
-        {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}
+        {{ substr($activity->start_time, 0, 5) }} น. - {{ substr($activity->end_time, 0, 5) }} น.
         · {{ $activity->location->name }}
     </div>
 

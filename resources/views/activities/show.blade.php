@@ -45,8 +45,7 @@
         <h1>{{ $activity->name }}</h1>
         <p class="desc">{{ $activity->description ?: 'ไม่มีคำอธิบาย' }}</p>
 
-        <p>📅 <strong>วันจัดกิจกรรม:</strong> {{ $activity->date->format('d/m/Y') }} {{ substr($activity->start_time, 0, 5) }}-{{ substr($activity->end_time, 0, 5) }}</p>
-
+        <p>📅 <strong>วันจัดกิจกรรม:</strong> {{ $activity->date->format('d/m/Y') }} {{ substr($activity->start_time, 0, 5) }} น. - {{ substr($activity->end_time, 0, 5) }} น.</p>
         <p>
             📍 <strong>สถานที่:</strong>
             {{ $activity->location->name }}

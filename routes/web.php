@@ -32,7 +32,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-activities', [ActivityController::class, 'myActivities'])->name('activities.mine');
 
     Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
-    // /activities/create ต้องอยู่ก่อน /activities/{activity} เสมอ ไม่งั้นจะ 404
     Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
     Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
     Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');

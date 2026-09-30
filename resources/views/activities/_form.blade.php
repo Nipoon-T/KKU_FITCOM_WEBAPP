@@ -38,15 +38,15 @@
                 @if ($activity?->cover_image)
                     <img src="{{ asset('storage/'.$activity->cover_image) }}" alt="รูปปกปัจจุบัน" id="cover-preview"
                         style="object-position: {{ old('cover_position', $activity?->cover_position ?? '50% 50%') }};">
+                    <span class="cover-hint" id="cover-hint">ลากรูปเพื่อปรับตำแหน่ง</span>
+                    <button type="button" id="cover-pick-btn" class="cover-change-btn">🖼️ เปลี่ยนรูป</button>
                 @else
                     <span id="cover-placeholder">⬆️<br>คลิกเพื่ออัปโหลดรูปภาพ</span>
-                    <img src="" alt="" id="cover-preview" style="display:none;">
+                    <img id="cover-preview" alt="" style="display:none;">
+                    <span class="cover-hint" id="cover-hint" style="display:none;">ลากรูปเพื่อปรับตำแหน่ง</span>
+                    <button type="button" id="cover-pick-btn" class="cover-change-btn" style="display:none;">🖼️ เปลี่ยนรูป</button>
                 @endif
-                <span class="cover-hint" id="cover-hint" style="display:none;">ลากรูปเพื่อปรับตำแหน่ง</span>
             </div>
-            <button type="button" id="cover-pick-btn" class="btn outline" style="margin-top:8px;">
-                {{ $activity?->cover_image ? 'เปลี่ยนรูป' : 'เลือกรูปภาพ' }}
-            </button>
             <input type="file" id="cover_image" name="cover_image" accept="image/*" style="display:none;">
             <input type="hidden" id="cover_position" name="cover_position"
                 value="{{ old('cover_position', $activity?->cover_position ?? '50% 50%') }}">
@@ -161,7 +161,20 @@
     const coverPositionInput = document.getElementById('cover_position');
     const coverPickBtn = document.getElementById('cover-pick-btn');
 
-    coverPickBtn.addEventListener('click', () => coverInput.click());
+    // ใช้ตัวแปรนี้บอกสถานะแทนการเช็ค .src (src="" ของ <img> จะกลายเป็น URL หน้าเว็บ ใช้เช็คไม่ได้)
+    let hasCover = {{ $activity?->cover_image ? 'true' : 'false' }};
+
+    coverPickBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        coverInput.click();
+    });
+
+    // คลิกที่กรอบตอนยังไม่มีรูป = เปิดหน้าต่างเลือกไฟล์ทันที
+    coverBox.addEventListener('click', () => {
+        if (!hasCover) {
+            coverInput.click();
+        }
+    });
 
     coverInput.addEventListener('change', () => {
         const file = coverInput.files[0];
@@ -173,6 +186,8 @@
         coverPositionInput.value = '50% 50%';
         if (coverPlaceholder) coverPlaceholder.style.display = 'none';
         coverHint.style.display = 'block';
+        coverPickBtn.style.display = 'block';
+        hasCover = true;
     });
 
     // ลากรูปในกรอบเพื่อปรับโฟกัส (ไม่ตัดไฟล์จริง แค่เก็บตำแหน่งไว้แสดงผล)
@@ -186,7 +201,7 @@
     let startPoint = { x: 0, y: 0 };
 
     function startDrag(clientX, clientY) {
-        if (!coverPreview.src) return;
+        if (!hasCover) return;
         dragging = true;
         startPos = parsePosition(coverPositionInput.value);
         startPoint = { x: clientX, y: clientY };
@@ -225,7 +240,15 @@
     }, { passive: false });
     coverBox.addEventListener('touchend', endDrag);
 
-    if (coverPreview.src) {
-        coverHint.style.display = 'block';
-    }
+    // บังคับแนบรูปตอนสร้างกิจกรรมใหม่ (ไม่บังคับตอนแก้ไข)
+    const isCreating = {{ $activity ? 'false' : 'true' }};
+    const form = document.querySelector('.act-form');
+
+    form.addEventListener('submit', (event) => {
+        if (isCreating && coverInput.files.length === 0) {
+            event.preventDefault();
+            coverBox.style.borderColor = '#d9534f';
+            alert('กรุณาเลือกรูปปกกิจกรรมก่อนสร้าง');
+        }
+    });
 </script>

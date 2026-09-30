@@ -49,7 +49,14 @@
         position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
         background: rgba(0,0,0,.55); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 20px;
     }
-    .field-err { color: #d9534f; font-size: 12px; margin-top: 4px; }</style>
+    .field-err { color: #d9534f; font-size: 12px; margin-top: 4px; }
+    .cover-change-btn {
+        position: absolute; top: 10px; right: 10px; z-index: 2;
+        background: #fff; border: none; border-radius: 20px;
+        padding: 6px 14px; font-size: 12px; cursor: pointer; color: #3a9fb0;
+        box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
+    .cover-change-btn:hover { background: #f0f9fb; } </style>
 @endsection
 
 @section('content')
