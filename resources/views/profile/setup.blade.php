@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.site')
 
 @section('content')
 <div style="max-width: 600px; margin: 40px auto; padding: 20px;">
@@ -29,6 +29,22 @@
         <div style="margin-bottom: 15px;">
             <label for="bio">เกี่ยวกับฉัน</label><br>
             <textarea name="bio" id="bio" style="width: 100%; padding: 8px;">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>กีฬาที่สนใจ (เลือกได้หลายอัน)</label><br>
+            @php
+                $selectedSports = $user->sports->pluck('id')->toArray();
+            @endphp
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                @foreach ($sports as $sport)
+                    <label style="border: 1px solid #ccc; padding: 6px 12px; border-radius: 20px; cursor: pointer;">
+                        <input type="checkbox" name="sports[]" value="{{ $sport->id }}"
+                            {{ in_array($sport->id, $selectedSports) ? 'checked' : '' }}
+                            style="margin-right: 5px;">
+                        {{ $sport->name }}
+                    </label>
+                @endforeach
+            </div>
         </div>
 
         <button type="submit" style="padding: 10px 20px; background: #4FC3D9; color: white; border: none; border-radius: 4px;">
