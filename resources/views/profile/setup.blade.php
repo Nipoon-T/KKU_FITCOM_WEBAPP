@@ -13,12 +13,26 @@
 
         <div style="margin-bottom: 15px;">
             <label for="goal">เป้าหมายการออกกำลังกาย</label><br>
-            <input type="text" name="goal" id="goal" value="{{ old('goal', $user->profile->goal ?? '') }}" style="width: 100%; padding: 8px;">
+            @php $currentGoal = old('goal', $user->profile->goal ?? ''); @endphp
+            <select name="goal" id="goal" style="width: 100%; padding: 8px;">
+                <option value="">-- เลือกเป้าหมาย --</option>
+                <option value="ลดน้ำหนัก" {{ $currentGoal == 'ลดน้ำหนัก' ? 'selected' : '' }}>ลดน้ำหนัก</option>
+                <option value="เพิ่มกล้ามเนื้อ" {{ $currentGoal == 'เพิ่มกล้ามเนื้อ' ? 'selected' : '' }}>เพิ่มกล้ามเนื้อ</option>
+                <option value="สุขภาพทั่วไป" {{ $currentGoal == 'สุขภาพทั่วไป' ? 'selected' : '' }}>สุขภาพทั่วไป</option>
+                <option value="เข้าสังคม/หาเพื่อน" {{ $currentGoal == 'เข้าสังคม/หาเพื่อน' ? 'selected' : '' }}>เข้าสังคม/หาเพื่อน</option>
+                <option value="อื่นๆ" {{ $currentGoal == 'อื่นๆ' ? 'selected' : '' }}>อื่นๆ</option>
+            </select>
         </div>
 
         <div style="margin-bottom: 15px;">
             <label for="skill_level">ระดับความสามารถ</label><br>
-            <input type="text" name="skill_level" id="skill_level" value="{{ old('skill_level', $user->profile->skill_level ?? '') }}" style="width: 100%; padding: 8px;">
+            @php $currentSkill = old('skill_level', $user->profile->skill_level ?? ''); @endphp
+            <select name="skill_level" id="skill_level" style="width: 100%; padding: 8px;">
+                <option value="">-- เลือกระดับ --</option>
+                <option value="เริ่มต้น" {{ $currentSkill == 'เริ่มต้น' ? 'selected' : '' }}>เริ่มต้น</option>
+                <option value="ปานกลาง" {{ $currentSkill == 'ปานกลาง' ? 'selected' : '' }}>ปานกลาง</option>
+                <option value="ผู้เชี่ยวชาญ" {{ $currentSkill == 'ผู้เชี่ยวชาญ' ? 'selected' : '' }}>ผู้เชี่ยวชาญ</option>
+            </select>
         </div>
 
         <div style="margin-bottom: 15px;">
