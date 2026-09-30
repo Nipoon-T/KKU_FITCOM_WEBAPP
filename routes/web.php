@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -23,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/communities/create', [CommunityController::class, 'create'])->name('community.create');
     Route::post('/communities', [CommunityController::class, 'store'])->name('community.store');
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('community.show');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__.'/settings.php';
