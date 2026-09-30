@@ -116,4 +116,12 @@ class User extends Authenticatable implements PasskeyUser
     {
         return (int) $this->pointLogs()->sum('points_change');
     }
+
+    /**
+     * @return HasMany<UserAvailability, User>
+     */
+    public function availabilities(): HasMany
+    {
+        return $this->hasMany(UserAvailability::class);
+    }
 }
