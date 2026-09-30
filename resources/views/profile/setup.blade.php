@@ -36,9 +36,15 @@
         </div>
 
         <div style="margin-bottom: 15px;">
-            <label for="preferred_location">พื้นที่สะดวก</label><br>
-            <input type="text" name="preferred_location" id="preferred_location" value="{{ old('preferred_location', $user->profile->preferred_location ?? '') }}" style="width: 100%; padding: 8px;">
-        </div>
+        <label for="preferred_location">พื้นที่สะดวก</label><br>
+        @php $currentLocation = old('preferred_location', $user->profile->preferred_location ?? ''); @endphp
+        <select name="preferred_location" id="preferred_location" style="width: 100%; padding: 8px;">
+            <option value="">-- เลือกพื้นที่ --</option>
+            <option value="16.476583,102.818127" {{ $currentLocation == '16.476583,102.818127' ? 'selected' : '' }}>ใน มข.</option>
+            <option value="16.469000,102.822000" {{ $currentLocation == '16.469000,102.822000' ? 'selected' : '' }}>รอบ มข. (ศิลา/กังสดาล/โนนม่วง)</option>
+            <option value="16.417086,102.835127" {{ $currentLocation == '16.417086,102.835127' ? 'selected' : '' }}>ในเมืองขอนแก่น/ไกลออกไป</option>
+        </select>
+    </div>
 
         <div style="margin-bottom: 15px;">
             <label for="bio">เกี่ยวกับฉัน</label><br>
@@ -61,7 +67,33 @@
                 @endforeach
             </div>
         </div>
-
+        <div style="margin-bottom: 15px;">
+    <label>ช่วงเวลาว่าง (คลิกเลือกได้หลายช่อง)</label><br>
+    @php
+        $days = ['0' => 'อาทิตย์', '1' => 'จันทร์', '2' => 'อังคาร', '3' => 'พุธ', '4' => 'พฤหัสบดี', '5' => 'ศุกร์', '6' => 'เสาร์'];
+        $timeSlots = ['06:00-11:59', '12:00-17:59', '18:00-20:59'];
+    @endphp
+    <table style="border-collapse: collapse; width: 100%; margin-top: 8px;">
+        <tr>
+            <th style="border: 1px solid #ccc; padding: 8px;"></th>
+            @foreach ($timeSlots as $timeSlot)
+                <th style="border: 1px solid #ccc; padding: 8px;">{{ $timeSlot }}</th>
+            @endforeach
+        </tr>
+        @foreach ($days as $dayNumber => $dayName)
+            <tr>
+                <td style="border: 1px solid #ccc; padding: 8px;">{{ $dayName }}</td>
+                @foreach ($timeSlots as $timeSlot)
+                    @php $slotKey = $dayNumber.'_'.$timeSlot; @endphp
+                    <td style="border: 1px solid #ccc; padding: 8px; text-align: center;">
+                        <input type="checkbox" name="availability[]" value="{{ $slotKey }}"
+                            {{ in_array($slotKey, $selectedAvailability) ? 'checked' : '' }}>
+                    </td>
+                @endforeach
+            </tr>
+        @endforeach
+    </table>
+</div>
         <button type="submit" style="padding: 10px 20px; background: #4FC3D9; color: white; border: none; border-radius: 4px;">
             บันทึก
         </button>
