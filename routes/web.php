@@ -1,13 +1,14 @@
 <?php
 
 use App\Http\Controllers\CommunityController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'member'])->name('dashboard');
 
     Route::get('/profile/setup', [ProfileController::class, 'edit'])->name('profile.setup');
     Route::post('/profile/setup', [ProfileController::class, 'update'])->name('profile.update');
