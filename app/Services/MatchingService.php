@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Activity;
 use App\Models\MatchWeight;
 use App\Models\User;
+use App\Models\UserAvailability;
 use App\Models\UserProfile;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 class MatchingService
@@ -20,10 +22,10 @@ class MatchingService
         $mySportIds = $user->sports->pluck('id')->toArray();
         $weights = MatchWeight::pluck('weight_value', 'factor_name');
 
-        // เอาเฉพาะกิจกรรมที่ user ยังไม่ได้เข้าร่วม
+        // ซ่อนเฉพาะกิจกรรมที่ user ยังลงทะเบียนอยู่ (ยกเลิกแล้วยังเห็น)
         $activities = Activity::with(['sport', 'location'])
             ->whereDoesntHave('participants', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('user_id', $user->id)->where('status', 'registered');
             })
             ->get();
 
@@ -32,7 +34,7 @@ class MatchingService
             $score += $this->sportScore($activity, $mySportIds) * $weights['sport_match'];
             $score += $this->goalScore($activity, $profile) * $weights['goal_match'];
             $score += $this->skillScore($activity, $profile) * $weights['skill_match'];
-            $score += $this->timeScore() * $weights['time_overlap'];
+            $score += $this->timeScore($activity, $user) * $weights['time_overlap'];
             $score += $this->locationScore($activity, $profile) * $weights['location_match'];
 
             // แปลงเป็นเปอร์เซ็นต์ (0-100) แล้วแปะไว้ที่กิจกรรม
@@ -111,10 +113,34 @@ class MatchingService
         return 0;
     }
 
-    // 4) เวลา: ยังไม่มีข้อมูลเวลาว่างของ user ในฐานข้อมูล เลยให้ 0.5 ไปก่อน
-    private function timeScore(): float
+    // 4) เวลา: เช็คว่าเวลาเริ่มกิจกรรมอยู่ในช่วงว่างของ user ไหม (ไม่มีข้อมูลเลย = 0.5)
+    private function timeScore(Activity $activity, User $user): float
     {
-        return 0.5;
+        $slots = UserAvailability::where('user_id', $user->id)->get();
+
+        if ($slots->isEmpty()) {
+            return 0.5;
+        }
+
+        // วันในสัปดาห์ของกิจกรรม (0 = อาทิตย์ เหมือนที่เก็บใน day_of_week)
+        $day = Carbon::parse($activity->date)->dayOfWeek;
+        // เอาแค่ HH:MM จาก start_time
+        $start = substr((string) $activity->start_time, 0, 5);
+
+        foreach ($slots as $slot) {
+            if ($slot->day_of_week != $day) {
+                continue;
+            }
+
+            // time_slot เก็บเป็นข้อความ เช่น "06:00-11:59"
+            [$from, $to] = explode('-', $slot->time_slot);
+
+            if ($start >= $from && $start <= $to) {
+                return 1;
+            }
+        }
+
+        return 0;
     }
 
     // 5) สถานที่: ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location ไหม
