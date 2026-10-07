@@ -4,11 +4,17 @@ namespace App\Services;
 
 use App\Models\Activity;
 use App\Models\MatchWeight;
+use App\Models\User;
+use App\Models\UserProfile;
+use Illuminate\Database\Eloquent\Collection;
 
 class MatchingService
 {
     // คำนวณ % match ของกิจกรรมทุกอัน ให้ user ที่ล็อกอินอยู่
-    public function getRecommendations($user)
+    /**
+     * @return Collection<int, Activity>
+     */
+    public function getRecommendations(User $user): Collection
     {
         $profile = $user->profile;
         $mySportIds = $user->sports->pluck('id')->toArray();
@@ -29,14 +35,18 @@ class MatchingService
             $score += $this->timeScore() * $weights['time_overlap'];
             $score += $this->locationScore($activity, $profile) * $weights['location_match'];
 
-            $activity->match_score = round($score * 100);
+            // แปลงเป็นเปอร์เซ็นต์ (0-100) แล้วแปะไว้ที่กิจกรรม
+            $activity->setAttribute('match_score', round($score * 100));
         }
 
         return $activities->sortByDesc('match_score')->values();
     }
 
     // 1) กีฬาตรงกับที่ user สนใจไหม (ตรง = 1, ไม่ตรง = 0)
-    private function sportScore($activity, $mySportIds)
+    /**
+     * @param  array<int, mixed>  $mySportIds
+     */
+    private function sportScore(Activity $activity, array $mySportIds): float
     {
         if (in_array($activity->sport_id, $mySportIds)) {
             return 1;
@@ -46,7 +56,7 @@ class MatchingService
     }
 
     // 2) เป้าหมาย: goal เป็นข้อความที่ user พิมพ์เอง เลยเช็คว่ามีคำนี้อยู่ไหม
-    private function goalScore($activity, $profile)
+    private function goalScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->goal) {
             return 0.5;
@@ -69,9 +79,9 @@ class MatchingService
     }
 
     // 3) ระดับ: skill_level ของ user เป็นข้อความ แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
-    private function skillScore($activity, $profile)
+    private function skillScore(Activity $activity, ?UserProfile $profile): float
     {
-        if (! $profile || ! $profile->skill_level || $activity->skill_level === null) {
+        if (! $profile || ! $profile->skill_level) {
             return 0.5;
         }
 
@@ -102,13 +112,13 @@ class MatchingService
     }
 
     // 4) เวลา: ยังไม่มีข้อมูลเวลาว่างของ user ในฐานข้อมูล เลยให้ 0.5 ไปก่อน
-    private function timeScore()
+    private function timeScore(): float
     {
         return 0.5;
     }
 
     // 5) สถานที่: ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location ไหม
-    private function locationScore($activity, $profile)
+    private function locationScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->preferred_location || ! $activity->location) {
             return 0.5;
