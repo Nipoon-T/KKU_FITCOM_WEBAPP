@@ -11,10 +11,10 @@ class MatchWeightSeeder extends Seeder
     {
         // น้ำหนักรวมกันต้องได้ 1.00
         $weights = [
-            'sport_match'    => 0.30,
-            'goal_match'     => 0.20,
-            'skill_match'    => 0.20,
-            'time_overlap'   => 0.15,
+            'sport_match' => 0.30,
+            'goal_match' => 0.20,
+            'skill_match' => 0.20,
+            'time_overlap' => 0.15,
             'location_match' => 0.15,
         ];
 

@@ -41,13 +41,14 @@ class MatchingService
         if (in_array($activity->sport_id, $mySportIds)) {
             return 1;
         }
+
         return 0;
     }
 
     // 2) เป้าหมาย: goal เป็นข้อความที่ user พิมพ์เอง เลยเช็คว่ามีคำนี้อยู่ไหม
     private function goalScore($activity, $profile)
     {
-        if (!$profile || !$profile->goal) {
+        if (! $profile || ! $profile->goal) {
             return 0.5;
         }
 
@@ -70,7 +71,7 @@ class MatchingService
     // 3) ระดับ: skill_level ของ user เป็นข้อความ แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
     private function skillScore($activity, $profile)
     {
-        if (!$profile || !$profile->skill_level || $activity->skill_level === null) {
+        if (! $profile || ! $profile->skill_level || $activity->skill_level === null) {
             return 0.5;
         }
 
@@ -96,6 +97,7 @@ class MatchingService
         if ($diff == 1) {
             return 0.5;
         }
+
         return 0;
     }
 
@@ -108,7 +110,7 @@ class MatchingService
     // 5) สถานที่: ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location ไหม
     private function locationScore($activity, $profile)
     {
-        if (!$profile || !$profile->preferred_location || !$activity->location) {
+        if (! $profile || ! $profile->preferred_location || ! $activity->location) {
             return 0.5;
         }
 
@@ -119,6 +121,7 @@ class MatchingService
         if (str_contains($name, $place) || str_contains($address, $place)) {
             return 1;
         }
+
         return 0;
     }
 }
