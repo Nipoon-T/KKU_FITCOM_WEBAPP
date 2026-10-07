@@ -10,7 +10,7 @@
                 <p><strong>Match {{ $activity->match_score }}%</strong></p>
             </div>
         @empty
-            <p>ยังไม่มีกิจกรรมแนะนำ ลองกรอกโปรไฟล์ให้ครบก่อนนะ</p>
+            <p>ยังไม่มีกิจกรรมแนะนำในตอนนี้</p>
         @endforelse
     </div>
 </x-layouts::app>
