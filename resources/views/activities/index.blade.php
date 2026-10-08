@@ -18,6 +18,8 @@
     .filter-row fieldset { border: none; padding: 0; min-width: 160px; }
     .filter-row legend { font-size: 13px; color: #777; margin-bottom: 6px; padding: 0; }
     .filter-row label { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; margin-right: 10px; white-space: nowrap; }
+    .pill { display: inline-flex; align-items: center; gap: 4px; background: #f2f2f2; border-radius: 20px; padding: 6px 14px; margin: 0 6px 6px 0; font-size: 13px; cursor: pointer; }
+    .pill input { accent-color: #70c5d3; }    
     .search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; }
 
     .act-count { color: #777; font-size: 14px; margin-bottom: 12px; }
@@ -48,12 +50,12 @@
         <div class="filter-row">
             <fieldset>
                 <legend>ประเภทกิจกรรม</legend>
-                <label>
+                <label class="pill">
                     <input type="radio" name="sport" value="" {{ request('sport') == '' ? 'checked' : '' }}>
                     ทั้งหมด
                 </label>
                 @foreach ($sports as $sport)
-                    <label>
+                    <label class="pill">
                         <input type="radio" name="sport" value="{{ $sport->id }}" {{ request('sport') == $sport->id ? 'checked' : '' }}>
                         {{ $sport->name }}
                     </label>
@@ -74,12 +76,12 @@
 
             <fieldset>
                 <legend>ระดับกิจกรรม</legend>
-                <label>
+                <label class="pill">
                     <input type="radio" name="level" value="" {{ request('level') == '' ? 'checked' : '' }}>
                     ทั้งหมด
                 </label>
                 @foreach ($levels as $value => $label)
-                    <label>
+                    <label class="pill">
                         <input type="radio" name="level" value="{{ $value }}" {{ request('level') == $value ? 'checked' : '' }}>
                         {{ $label }}
                     </label>

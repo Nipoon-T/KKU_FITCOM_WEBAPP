@@ -63,24 +63,11 @@
                 </label>
             @endforeach
         </fieldset>
-
-        <div class="field">
-            <label for="location_id">พื้นที่/โซน</label>
-            <select id="location_id" name="location_id" required>
-                <option value="">เลือกสถานที่</option>
-                @foreach ($locations as $location)
-                    <option value="{{ $location->id }}"
-                        {{ (int) old('location_id', $activity?->location_id) === $location->id ? 'selected' : '' }}>
-                        {{ $location->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
     </div>
 
     <div class="form-card">
-        <h2>2. เลือกประเภทกิจกรรม</h2>
-        
+        <h2>2. เลือกประเภทกิจกรรมและสถานที่</h2>
+
         <fieldset>
             <legend>ประเภทกิจกรรม</legend>
             @foreach ($sports as $sport)
@@ -91,6 +78,20 @@
                 </label>
             @endforeach
         </fieldset>
+
+        <div class="field">
+            <label for="location_id">พื้นที่/โซน</label>
+            <select id="location_id" name="location_id" required>
+                <option value="">เลือกสถานที่</option>
+                @foreach ($locations as $location)
+                    <option value="{{ $location->id }}"
+                        data-sports="{{ $location->sports->pluck('id')->implode(',') }}"
+                        {{ (int) old('location_id', $activity?->location_id) === $location->id ? 'selected' : '' }}>
+                        {{ $location->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
     </div>
 
     <div class="form-card">
@@ -244,4 +245,38 @@
             alert('กรุณาเลือกรูปปกกิจกรรมก่อนสร้าง');
         }
     });
+    const sportRadios = document.querySelectorAll('input[name="sport_id"]');
+    const locationSelect = document.getElementById('location_id');
+    const locationOptions = Array.from(locationSelect.options);
+
+    function filterLocationsBySport() {
+        const checked = document.querySelector('input[name="sport_id"]:checked');
+
+        if (!checked) {
+            locationOptions.forEach((opt) => { opt.hidden = false; });
+            return;
+        }
+
+        const sportId = checked.value;
+        const matches = locationOptions.filter((opt) => {
+            if (!opt.value) return true;
+            const tags = (opt.dataset.sports || '').split(',').filter(Boolean);
+            return tags.length === 0 || tags.includes(sportId);
+        });
+
+        const realMatches = matches.filter((opt) => opt.value !== '');
+        const visibleSet = realMatches.length > 0 ? matches : locationOptions;
+
+        locationOptions.forEach((opt) => {
+            opt.hidden = !visibleSet.includes(opt);
+        });
+
+        const selectedOpt = locationSelect.options[locationSelect.selectedIndex];
+        if (selectedOpt && selectedOpt.hidden) {
+            locationSelect.value = '';
+        }
+    }
+
+    sportRadios.forEach((radio) => radio.addEventListener('change', filterLocationsBySport));
+    filterLocationsBySport();
 </script>

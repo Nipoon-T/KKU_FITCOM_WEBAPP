@@ -51,55 +51,95 @@
 
     <h2 class="sec-title">แก้ไข/ยกเลิกกิจกรรม</h2>
 
-    @forelse ($activities as $activity)
-        <div class="row-card">
-            <div class="name">
-                <a href="{{ route('activities.show', $activity) }}">{{ $activity->name }} →</a>
-                <span class="date">{{ $activity->date->format('d/m/Y') }}</span>
+    <div id="edit-list">
+        @forelse ($activities as $activity)
+            <div class="row-card" data-activity-id="{{ $activity->id }}">
+                <div class="name">
+                    <a href="{{ route('activities.show', $activity) }}">{{ $activity->name }} →</a>
+                    <span class="date">{{ $activity->date->format('d/m/Y') }}</span>
+                </div>
+                <div class="actions">
+                    @unless ($activity->date->lt(today()))
+                        <a href="{{ route('activities.edit', $activity) }}" class="btn outline">แก้ไข</a>
+                    @endunless
+                    <form action="{{ route('activities.destroy', $activity) }}" method="POST" class="delete-form" data-activity-id="{{ $activity->id }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn danger">ลบ</button>
+                    </form>
+                </div>
             </div>
-            <div class="actions">
-                @unless ($activity->date->lt(today()))
-                    <a href="{{ route('activities.edit', $activity) }}" class="btn outline">แก้ไข</a>
-                @endunless
-                <form action="{{ route('activities.destroy', $activity) }}" method="POST" class="delete-form">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn danger">ลบ</button>
-                </form>
-            </div>
-        </div>
-    @empty
-        <p class="empty">คุณยังไม่ได้สร้างกิจกรรม</p>
-    @endforelse
+        @empty
+            <p class="empty">คุณยังไม่ได้สร้างกิจกรรม</p>
+        @endforelse
+    </div>
 
     <h2 class="sec-title">เช็คชื่อผู้เข้าร่วม</h2>
 
-    @forelse ($activities as $activity)
-        <div class="checkin-card">
-            <h3>{{ $activity->name }}</h3>
-            <p>
-                {{ $activity->date->format('d/m/Y') }}
-                {{ substr($activity->start_time, 0, 5) }} น. - {{ substr($activity->end_time, 0, 5) }} น.
-                · {{ $activity->location->name }}
-            </p>
+    <div id="checkin-list">
+        @forelse ($activities as $activity)
+            <div class="checkin-card" data-activity-id="{{ $activity->id }}">
+                <h3>{{ $activity->name }}</h3>
+                <p>
+                    {{ $activity->date->format('d/m/Y') }}
+                    {{ substr($activity->start_time, 0, 5) }} น. - {{ substr($activity->end_time, 0, 5) }} น.
+                    · {{ $activity->location->name }}
+                </p>
 
-            <progress value="{{ $activity->registered_count }}" max="{{ max(1, $activity->max_participants) }}"></progress>
-            <p>{{ $activity->registered_count }}/{{ $activity->max_participants }} Registered · เช็คชื่อแล้ว {{ $activity->checked_count }}/{{ $activity->registered_count }}</p>
+                <progress value="{{ $activity->registered_count }}" max="{{ max(1, $activity->max_participants) }}"></progress>
+                <p>{{ $activity->registered_count }}/{{ $activity->max_participants }} Registered · เช็คชื่อแล้ว {{ $activity->checked_count }}/{{ $activity->registered_count }}</p>
 
-            <a href="{{ route('activities.attendance', $activity) }}" class="btn outline">Check-in List</a>
-        </div>
-    @empty
-        <p class="empty">ยังไม่มีกิจกรรมให้เช็คชื่อ</p>
-    @endforelse
+                <a href="{{ route('activities.attendance', $activity) }}" class="btn outline">Check-in List</a>
+            </div>
+        @empty
+            <p class="empty">ยังไม่มีกิจกรรมให้เช็คชื่อ</p>
+        @endforelse
+    </div>
 </div>
 @endsection
 
 @section('scripts')
 <script>
     document.querySelectorAll('.delete-form').forEach((form) => {
-        form.addEventListener('submit', (event) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
             if (!confirm('ต้องการลบกิจกรรมนี้ใช่หรือไม่?')) {
-                event.preventDefault();
+                return;
+            }
+
+            const activityId = form.dataset.activityId;
+            const button = form.querySelector('button');
+            button.disabled = true;
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': form.querySelector('input[name=_token]').value,
+                },
+                body: new FormData(form),
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                button.disabled = false;
+                alert(data?.message || 'ลบไม่สำเร็จ ลองใหม่อีกครั้ง');
+                return;
+            }
+
+            document.querySelectorAll(`[data-activity-id="${activityId}"]`).forEach((el) => el.remove());
+
+            const editList = document.getElementById('edit-list');
+            const checkinList = document.getElementById('checkin-list');
+
+            if (editList && editList.children.length === 0) {
+                editList.innerHTML = '<p class="empty">คุณยังไม่ได้สร้างกิจกรรม</p>';
+            }
+
+            if (checkinList && checkinList.children.length === 0) {
+                checkinList.innerHTML = '<p class="empty">ยังไม่มีกิจกรรมให้เช็คชื่อ</p>';
             }
         });
     });
