@@ -1,5 +1,4 @@
-{{-- ฟอร์มกิจกรรม ใช้ร่วมกันทั้งหน้าสร้าง (create) และแก้ไข (edit) --}}
-{{-- ตัวแปรที่ต้องส่งเข้ามา: $activity (null ถ้าเป็นการสร้าง), $action, $method, $submitLabel --}}
+<!-- ฟอร์มกิจกรรมใช้ร่วมกับ create, edit -->
 
 @if ($errors->any())
     <ul class="err-list">
@@ -81,7 +80,7 @@
 
     <div class="form-card">
         <h2>2. เลือกประเภทกิจกรรม</h2>
-
+        
         <fieldset>
             <legend>ประเภทกิจกรรม</legend>
             @foreach ($sports as $sport)
@@ -142,7 +141,6 @@
 </form>
 
 <script>
-    // ตัวนับตัวอักษร (0/180, 0/300)
     document.querySelectorAll('[data-counter]').forEach((field) => {
         const counter = document.getElementById(field.dataset.counter);
         const update = () => { counter.textContent = field.value.length; };
@@ -151,8 +149,6 @@
         update();
     });
 
-        // พรีวิวรูปที่เลือกทันที ก่อนอัปโหลดจริง
-    // เลือกรูป + พรีวิวทันที + ลากปรับตำแหน่งก่อนบันทึก
     const coverBox = document.getElementById('cover-box');
     const coverInput = document.getElementById('cover_image');
     const coverPreview = document.getElementById('cover-preview');
@@ -161,7 +157,6 @@
     const coverPositionInput = document.getElementById('cover_position');
     const coverPickBtn = document.getElementById('cover-pick-btn');
 
-    // ใช้ตัวแปรนี้บอกสถานะแทนการเช็ค .src (src="" ของ <img> จะกลายเป็น URL หน้าเว็บ ใช้เช็คไม่ได้)
     let hasCover = {{ $activity?->cover_image ? 'true' : 'false' }};
 
     coverPickBtn.addEventListener('click', (e) => {
@@ -169,7 +164,6 @@
         coverInput.click();
     });
 
-    // คลิกที่กรอบตอนยังไม่มีรูป = เปิดหน้าต่างเลือกไฟล์ทันที
     coverBox.addEventListener('click', () => {
         if (!hasCover) {
             coverInput.click();
@@ -184,13 +178,13 @@
         coverPreview.style.display = 'block';
         coverPreview.style.objectPosition = '50% 50%';
         coverPositionInput.value = '50% 50%';
+
         if (coverPlaceholder) coverPlaceholder.style.display = 'none';
         coverHint.style.display = 'block';
         coverPickBtn.style.display = 'block';
         hasCover = true;
     });
 
-    // ลากรูปในกรอบเพื่อปรับโฟกัส (ไม่ตัดไฟล์จริง แค่เก็บตำแหน่งไว้แสดงผล)
     function parsePosition(value) {
         const [x, y] = value.split(' ').map((v) => parseFloat(v));
         return { x: isNaN(x) ? 50 : x, y: isNaN(y) ? 50 : y };
@@ -240,7 +234,6 @@
     }, { passive: false });
     coverBox.addEventListener('touchend', endDrag);
 
-    // บังคับแนบรูปตอนสร้างกิจกรรมใหม่ (ไม่บังคับตอนแก้ไข)
     const isCreating = {{ $activity ? 'false' : 'true' }};
     const form = document.querySelector('.act-form');
 
