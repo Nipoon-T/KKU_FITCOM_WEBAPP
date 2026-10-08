@@ -96,7 +96,6 @@
 
 @section('scripts')
 <script>
-    // ถามยืนยันก่อนลบ
     document.querySelectorAll('.delete-form').forEach((form) => {
         form.addEventListener('submit', (event) => {
             if (!confirm('ต้องการลบกิจกรรมนี้ใช่หรือไม่?')) {

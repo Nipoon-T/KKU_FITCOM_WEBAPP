@@ -18,15 +18,12 @@ use Illuminate\View\View;
 
 class ActivityController extends Controller
 {
-    // ระดับกิจกรรม เก็บเป็นเลข 1-3 ในตาราง activities
     private const LEVELS = [
         1 => 'ง่าย',
         2 => 'ปานกลาง',
         3 => 'เชี่ยวชาญ',
     ];
 
-    // index หน้าแรก ค้นหากิจกรรม
-    // ตัวกรอง: q (คำค้น) / sport / date (วันเดียว) / from-to (ช่วงเวลา) / level / location
     public function index(Request $request): View
     {
         $query = Activity::with(['sport', 'location', 'community'])
@@ -63,7 +60,6 @@ class ActivityController extends Controller
             $query->whereDate('date', $request->input('date'));
         }
 
-        // ช่วงเวลา: กิจกรรมต้องเริ่มไม่ก่อน from และจบไม่เกิน to
         if ($request->filled('from')) {
             $query->where('start_time', '>=', $request->input('from'));
         }
@@ -79,13 +75,11 @@ class ActivityController extends Controller
         return view('activities.index', compact('activities', 'sports', 'levels'));
     }
 
-    // create หน้าสร้างกิจกรรม
     public function create(): View
     {
         return view('activities.create', $this->formData());
     }
 
-    // store เก็บข้อมูลกิจกรรม
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->rules(requireCover: true));
@@ -100,7 +94,6 @@ class ActivityController extends Controller
             ->with('success', 'สร้างกิจกรรมสำเร็จ');
     }
 
-    // show รายละเอียดกิจกรรม
     public function show(Activity $activity): View
     {
         $activity->load(['sport', 'location', 'creator', 'community']);
@@ -112,7 +105,6 @@ class ActivityController extends Controller
         return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels'));
     }
 
-    // edit หน้าแก้ไขกิจกรรม (เฉพาะเจ้าของ และกิจกรรมที่ยังไม่จบ)
     public function edit(Activity $activity): View
     {
         $this->abortUnlessOwner($activity);
@@ -124,7 +116,6 @@ class ActivityController extends Controller
         ]);
     }
 
-    // update บันทึกการแก้ไข
     public function update(Request $request, Activity $activity): RedirectResponse
     {
         $this->abortUnlessOwner($activity);
@@ -133,7 +124,6 @@ class ActivityController extends Controller
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
 
         $rules = $this->rules();
-        // ลดจำนวนที่รับให้ต่ำกว่าคนที่ลงทะเบียนแล้วไม่ได้
         $rules['max_participants'] = ['required', 'integer', 'min:'.max(1, $registeredCount)];
 
         $validated = $request->validate($rules);
@@ -145,7 +135,6 @@ class ActivityController extends Controller
             ->with('success', 'แก้ไขกิจกรรมสำเร็จ');
     }
 
-    // destroy ลบกิจกรรม (เฉพาะเจ้าของ และต้องยังไม่มีการเช็คชื่อ)
     public function destroy(Activity $activity): RedirectResponse
     {
         $this->abortUnlessOwner($activity);
@@ -170,7 +159,6 @@ class ActivityController extends Controller
             ->with('success', 'ลบกิจกรรมสำเร็จ');
     }
 
-    // register กดลงทะเบียนเข้าร่วมกิจกรรม
     public function register(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
@@ -191,7 +179,6 @@ class ActivityController extends Controller
             return $this->registerResult($request, 'กิจกรรมนี้เต็มแล้ว', false);
         }
 
-        // ตาราง unique (activity_id, user_id) ถ้าเคยสมัครแล้วยกเลิก ให้อัปเดตแถวเดิม
         ActivityParticipant::updateOrCreate(
             ['activity_id' => $activity->id, 'user_id' => $userId],
             ['status' => 'registered', 'registered_at' => now()],
@@ -200,7 +187,6 @@ class ActivityController extends Controller
         return $this->registerResult($request, 'ลงทะเบียนสำเร็จ', true, $registeredCount + 1);
     }
 
-    // myActivities หน้าจัดการกิจกรรมของคุณ (แก้ไข/ลบ + ภาพรวมการเช็คชื่อ)
     public function myActivities(): View
     {
         $activities = Activity::where('created_by', auth()->id())
@@ -215,7 +201,6 @@ class ActivityController extends Controller
         return view('activities.manage', compact('activities'));
     }
 
-    // attendance หน้ารายชื่อเช็คชื่อของกิจกรรมหนึ่ง
     public function attendance(Activity $activity): View
     {
         $this->abortUnlessOwner($activity);
@@ -232,7 +217,6 @@ class ActivityController extends Controller
         return view('activities.attendance', compact('activity', 'participants', 'canCheckin'));
     }
 
-    // checkin เช็คชื่อผู้เข้าร่วม (เฉพาะเจ้าของกิจกรรม และเฉพาะวันจัดกิจกรรม)
     public function checkin(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $this->abortUnlessOwner($activity);
@@ -246,17 +230,13 @@ class ActivityController extends Controller
             ->findOrFail((int) $validated['participant_id']);
 
         if (! $this->isActivityDay($activity)) {
-            return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรม');
+            return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรมเท่านั้น');
         }
 
         $attendance = Attendance::firstOrCreate(
             ['activity_participant_id' => $participant->id],
             ['checked_in_at' => now(), 'checked_by' => auth()->id()],
         );
-
-        if ($attendance->wasRecentlyCreated) {
-            // การให้แต้ม/streak/badge ทำงานอัตโนมัติผ่าน AttendanceObserver (คนที่ 5) แล้ว
-        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -270,8 +250,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * ข้อมูลที่ฟอร์มสร้าง/แก้ไขกิจกรรมต้องใช้
-     *
      * @return array<string, mixed>
      */
     private function formData(): array
@@ -285,8 +263,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * กฎ validation ของฟอร์มกิจกรรม (ใช้ร่วมกันทั้ง store และ update)
-     *
      * @return array<string, array<int, mixed>>
      */
     private function rules(bool $requireCover = false): array
@@ -297,7 +273,6 @@ class ActivityController extends Controller
             'cover_image' => [$requireCover ? 'required' : 'nullable', 'image', 'max:5120'],
             'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'],
             'sport_id' => ['required', 'exists:sports,id'],
-            // เลือกได้เฉพาะ community ที่ตัวเองเป็นคนสร้าง
             'community_id' => ['nullable', Rule::exists('communities', 'id')->where('created_by', auth()->id())],
             'location_id' => ['required', 'exists:locations,id'],
             'skill_level' => ['required', 'integer', 'between:1,3'],
@@ -309,9 +284,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * แปลงข้อมูลที่ผ่าน validation เป็นฟิลด์ของตาราง activities
-     * (ถ้าอัปโหลดรูปใหม่ จะลบรูปเก่าทิ้งแล้วใช้รูปใหม่แทน)
-     *
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
@@ -325,7 +297,6 @@ class ActivityController extends Controller
             }
 
             $coverImage = $request->file('cover_image')->store('activities', 'public');
-            // อัปโหลดรูปใหม่ ให้เริ่มที่กึ่งกลางใหม่เสมอ ตำแหน่งเดิมใช้กับรูปเก่าไม่ได้แล้ว
             $coverPosition = $validated['cover_position'] ?? '50% 50%';
         }
 

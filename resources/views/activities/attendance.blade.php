@@ -28,7 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.mine') }}" class="back-link">← Back to My Activities</a>
+    <a href="{{ route('activities.mine') }}" class="back-link">← กลับ</a>
 
     <h1>เช็คชื่อ: {{ $activity->name }}</h1>
 
@@ -48,7 +48,7 @@
     </div>
 
     @unless ($canCheckin)
-        <p class="warn">เช็คชื่อได้เฉพาะวันที่จัดกิจกรรม ({{ $activity->date->format('d/m/Y') }})</p>
+        <p class="warn">เช็คชื่อได้เฉพาะวันที่จัดกิจกรรมเท่านั้น ({{ $activity->date->format('d/m/Y') }})</p>
     @endunless
 
     <p class="count-line">
@@ -103,7 +103,6 @@
                 try {
                     message = (await response.json()).message || message;
                 } catch (e) {
-                    // ไม่ใช่ JSON ใช้ข้อความเริ่มต้น
                 }
 
                 alert(message);
