@@ -135,7 +135,7 @@ class ActivityController extends Controller
             ->with('success', 'แก้ไขกิจกรรมสำเร็จ');
     }
 
-    public function destroy(Activity $activity): RedirectResponse
+    public function destroy(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $this->abortUnlessOwner($activity);
 
@@ -145,7 +145,13 @@ class ActivityController extends Controller
         )->exists();
 
         if ($hasAttendance) {
-            return back()->withErrors(['activity' => 'ลบไม่ได้ เพราะมีการเช็คชื่อแล้ว']);
+            $message = 'ลบไม่ได้ เพราะมีการเช็คชื่อแล้ว';
+
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => false, 'message' => $message], 422);
+            }
+
+            return back()->withErrors(['activity' => $message]);
         }
 
         if ($activity->cover_image) {
@@ -153,6 +159,10 @@ class ActivityController extends Controller
         }
 
         $activity->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'message' => 'ลบกิจกรรมสำเร็จ']);
+        }
 
         return redirect()
             ->route('activities.mine')
@@ -256,7 +266,7 @@ class ActivityController extends Controller
     {
         return [
             'sports' => Sport::orderBy('name')->get(),
-            'locations' => Location::orderBy('name')->get(),
+            'locations' => Location::with('sports')->orderBy('name')->get(),
             'communities' => Community::where('created_by', auth()->id())->orderBy('name')->get(),
             'levels' => self::LEVELS,
         ];
