@@ -10,7 +10,7 @@
         <input type="text" placeholder="ค้นหากิจกรรม & คอมมูนิตี้ที่คุณชอบ"
             style="width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px;">
     </div>
-
+    @guest
     <div style="margin-top: 20px;">
         <a href="{{ route('register') }}" style="padding: 10px 20px; background: #4FC3D9; color: white; text-decoration: none; border-radius: 4px; margin-right: 10px;">
             สมัครสมาชิก
@@ -19,7 +19,7 @@
             เข้าสู่ระบบ
         </a>
     </div>
-
+    @endguest
     <hr style="margin: 30px 0;">
 
     <h2>ประเภทกีฬา</h2>
