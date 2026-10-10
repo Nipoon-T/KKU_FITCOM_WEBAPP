@@ -6,6 +6,7 @@ use App\Models\Community;
 use App\Models\CommunityMember;
 use App\Models\Sport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage; // ใช้ลบไฟล์รูปปกเก่า
 
 class CommunityController extends Controller
 {
@@ -188,6 +189,65 @@ class CommunityController extends Controller
         ]);
 
         return back()->with('success', 'โพสต์สำเร็จ');
+    }
+
+    // หน้าฟอร์มแก้ไขกลุ่ม (owner เท่านั้น)
+    public function edit(Community $community)
+    {
+        // ไม่ใช่เจ้าของ = ห้ามเข้า
+        abort_unless($community->isOwner(auth()->user()), 403);
+
+        $sports = Sport::orderBy('name')->get(); // ใช้ทำ dropdown กีฬา
+
+        return view('community.edit', compact('community', 'sports'));
+    }
+
+    // บันทึกการแก้ไข (owner เท่านั้น)
+    public function update(Request $request, Community $community)
+    {
+        abort_unless($community->isOwner(auth()->user()), 403);
+
+        // กฎเดียวกับตอนสร้าง
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'sport_id' => ['nullable', 'exists:sports,id'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'privacy' => ['required', 'in:public,private'],
+        ]);
+
+        // ถ้าเลือกรูปใหม่: ลบรูปเก่าทิ้ง แล้วเก็บรูปใหม่
+        if ($request->hasFile('cover_image')) {
+            if ($community->cover_image) {
+                Storage::disk('public')->delete($community->cover_image);
+            }
+            $validated['cover_image'] = $request->file('cover_image')->store('communities', 'public');
+        }
+
+        $community->update($validated); // บันทึกค่าใหม่ลง DB
+
+        return redirect()
+            ->route('community.show', $community)
+            ->with('success', 'แก้ไขข้อมูลกลุ่มแล้ว');
+    }
+
+    // ลบกลุ่ม (owner เท่านั้น)
+    public function destroy(Community $community)
+    {
+        abort_unless($community->isOwner(auth()->user()), 403);
+
+        // ลบไฟล์รูปปก (ถ้ามี)
+        if ($community->cover_image) {
+            Storage::disk('public')->delete($community->cover_image);
+        }
+
+        // ลบกลุ่ม → สมาชิกและโพสต์ถูกลบตาม (cascade ใน migration)
+        // กิจกรรมของคนที่ 3 ไม่ถูกลบ แค่ community_id กลายเป็น null
+        $community->delete();
+
+        return redirect()
+            ->route('community.index')
+            ->with('success', 'ลบกลุ่มแล้ว');
     }
 
     // ===== ฟังก์ชันช่วยเช็คสิทธิ์ (ใช้ภายใน Controller นี้เท่านั้น) =====

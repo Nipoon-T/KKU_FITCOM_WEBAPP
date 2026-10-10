@@ -68,6 +68,8 @@
         @if ($isOwner)
             {{-- 1) เป็นเจ้าของกลุ่ม --}}
             <span class="cm-badge">👑 คุณเป็นเจ้าของกลุ่มนี้</span>
+            {{-- ปุ่มไปหน้าแก้ไข (อยู่ใน @if ($isOwner) จึงเห็นเฉพาะเจ้าของ) --}}
+            <a href="{{ route('community.edit', $community) }}" class="btn outline small">✏️ แก้ไขกลุ่ม</a>
 
         @elseif ($isApprovedMember)
             {{-- 2) เป็นสมาชิกแล้ว → ออกจากกลุ่มได้ --}}
