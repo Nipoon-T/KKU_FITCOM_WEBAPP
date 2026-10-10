@@ -28,7 +28,30 @@ class CommunityController extends Controller
 
         return view('community.create', compact('sports'));
     }
+    // หน้า "จัดการกลุ่มของฉัน"
+    public function mine()
+    {
+        $userId = auth()->id(); // id ของคนที่ล็อกอินอยู่
 
+        // 1) หา id ของกลุ่มที่ฉันเป็นเจ้าของ
+        $ownedIds = CommunityMember::where('user_id', $userId)
+            ->where('role', 'owner')
+            ->pluck('community_id'); // ได้รายการ id เช่น [3, 5]
+
+        // ดึงกลุ่มเหล่านั้น พร้อมนับสมาชิกและคำขอที่รออนุมัติ
+        $ownedCommunities = Community::whereIn('id', $ownedIds)
+            ->withCount(['approvedMembers', 'pendingMembers'])
+            ->latest()
+            ->get();
+
+        // 2) กลุ่มที่ฉันเข้าร่วม (เป็น member ทั้ง approved และ pending)
+        $memberships = CommunityMember::with('community.sport') // ดึงข้อมูลกลุ่ม + กีฬามาด้วย
+            ->where('user_id', $userId)
+            ->where('role', 'member')
+            ->get();
+
+        return view('community.mine', compact('ownedCommunities', 'memberships'));
+    }
     // บันทึก Community ใหม่
     public function store(Request $request)
     {

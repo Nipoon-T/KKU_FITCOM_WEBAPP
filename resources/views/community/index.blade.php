@@ -9,6 +9,7 @@
     .cm-wrap { max-width: 1000px; margin: 0 auto; }
     .cm-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .btn { display: inline-block; padding: 8px 16px; border-radius: 8px; background: #70c5d3; color: #fff; text-decoration: none; font-size: 14px; }
+    .btn.outline { background: #fff; color: #3a9fb0; border: 1px solid #70c5d3; }
     .alert { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; background: #e8f8ee; color: #1e7e46; }
 
     /* การ์ดเรียงเป็นตาราง ปรับจำนวนคอลัมน์ตามความกว้างจอเอง */
@@ -29,7 +30,11 @@
     {{-- หัวหน้า + ปุ่มสร้างกลุ่ม --}}
     <div class="cm-top">
         <h1>Community</h1>
-        <a href="{{ route('community.create') }}" class="btn">+ สร้าง Community</a>
+        {{-- ห่อปุ่ม 2 ปุ่มไว้ด้วยกัน ให้อยู่ชิดขวา --}}
+        <div>
+            <a href="{{ route('community.mine') }}" class="btn outline">⚙️ จัดการกลุ่มของฉัน</a>
+            <a href="{{ route('community.create') }}" class="btn">+ สร้าง Community</a>
+        </div>
     </div>
 
     {{-- ข้อความแจ้งผล --}}

@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     // ดูรายการ / สร้างกลุ่ม
     Route::get('/communities', [CommunityController::class, 'index'])->name('community.index');
     Route::get('/communities/create', [CommunityController::class, 'create'])->name('community.create'); // ต้องอยู่ก่อน {community} ไม่งั้น "create" จะถูกมองเป็น id
+    Route::get('/communities/my', [CommunityController::class, 'mine'])->name('community.mine'); // จัดการกลุ่มของฉัน (ต้องอยู่ก่อน {community} เหมือน create)
     Route::post('/communities', [CommunityController::class, 'store'])->name('community.store');
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('community.show');
 
