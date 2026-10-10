@@ -200,7 +200,15 @@ class CommunityController extends Controller
 
         $member->update(['status' => 'approved']);
 
-        return back()->with('success', 'อนุมัติ ' . $member->user->name . ' แล้ว');
+        $message = 'อนุมัติ ' . $member->user->name . ' แล้ว';
+
+        // ถ้าเรียกมาจาก JavaScript (AJAX) → ตอบเป็น JSON
+        if (request()->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        // ถ้าส่งจากฟอร์มปกติ → กลับหน้าเดิม (แบบเดิม)
+        return back()->with('success', $message);
     }
 
     // owner ปฏิเสธคำขอ (ลบแถวทิ้ง ผู้ใช้จะสมัครใหม่ได้)
@@ -211,7 +219,13 @@ class CommunityController extends Controller
         $name = $member->user->name; // เก็บชื่อไว้ก่อนลบ
         $member->delete();
 
-        return back()->with('success', 'ปฏิเสธคำขอของ ' . $name . ' แล้ว');
+        $message = 'ปฏิเสธคำขอของ ' . $name . ' แล้ว';
+
+        if (request()->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     // โพสต์ข้อความในกลุ่ม

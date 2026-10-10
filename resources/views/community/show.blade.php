@@ -98,32 +98,38 @@
             </form>
         @endif
     </div>
-
-    {{-- ===== คำขอที่รออนุมัติ (owner เห็นคนเดียว) ===== --}}
     @if ($isOwner)
         <div class="cm-card">
-            <h2>คำขอเข้าร่วม ({{ $pendingMembers->count() }})</h2>
+            {{-- id="pendingCount" ให้ JS เปลี่ยนตัวเลขได้ --}}
+            <h2>คำขอเข้าร่วม (<span id="pendingCount">{{ $pendingMembers->count() }}</span>)</h2>
 
-            @forelse ($pendingMembers as $member)
-                <div class="row">
+            {{-- กล่องแสดงข้อความจาก AJAX (ซ่อนไว้ก่อน) --}}
+            <div id="ajaxMessage" style="display:none"></div>
+
+            @foreach ($pendingMembers as $member)
+                {{-- class "member-row" ให้ JS ลบทั้งแถวได้ --}}
+                <div class="row member-row">
                     <span>{{ $member->user->name }}</span>
                     <span>
-                        {{-- ปุ่มอนุมัติ: ส่ง id ของกลุ่ม + id แถวสมาชิก --}}
-                        <form method="POST" action="{{ route('community.approve', [$community, $member]) }}" style="display:inline">
+                        {{-- class "js-member-action" = ให้ community.js ดักฟอร์มนี้ --}}
+                        <form method="POST" action="{{ route('community.approve', [$community, $member]) }}" class="js-member-action" style="display:inline">
                             @csrf
                             <button type="submit" class="btn small">อนุมัติ</button>
                         </form>
-                        {{-- ปุ่มปฏิเสธ --}}
-                        <form method="POST" action="{{ route('community.reject', [$community, $member]) }}" style="display:inline">
+                        <form method="POST" action="{{ route('community.reject', [$community, $member]) }}" class="js-member-action" style="display:inline">
                             @csrf
                             <button type="submit" class="btn danger small">ปฏิเสธ</button>
                         </form>
                     </span>
                 </div>
-            @empty
-                <p class="muted">ไม่มีคำขอที่รออนุมัติ</p>
-            @endforelse
+            @endforeach
+
+            {{-- ข้อความ "ไม่มีคำขอ": แสดงถ้าตอนเปิดหน้าไม่มีคำขอ / JS จะเปิดให้เองเมื่อจัดการครบ --}}
+            <p id="pendingEmpty" class="muted" style="display: {{ $pendingMembers->count() == 0 ? 'block' : 'none' }}">
+                ไม่มีคำขอที่รออนุมัติ
+            </p>
         </div>
+
     @endif
 
     {{-- ===== กิจกรรมที่กำลังจะจัด (ข้อมูลจากโมดูลของคนที่ 3) ===== --}}
@@ -190,4 +196,10 @@
     </div>
 
 </div>
+@endsection
+
+
+{{-- โหลด JavaScript ของหน้านี้ (ไปอยู่ท้าย layout ตรง @yield('scripts')) --}}
+@section('scripts')
+    <script src="{{ asset('js/community.js') }}"></script>
 @endsection
