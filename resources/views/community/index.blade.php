@@ -21,6 +21,13 @@
     .cm-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; background: #e6f6f9; color: #3a9fb0; }
     .cm-badge.private { background: #fdecec; color: #c0392b; }
     .muted { color: #888; font-size: 13px; margin-top: 6px; }
+
+    /* กล่องค้นหา/กรอง */
+    .filter { display: flex; flex-wrap: wrap; gap: 8px; background: #fff; padding: 12px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+    .filter input, .filter select { padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .filter input { flex: 1; min-width: 180px; } /* ช่องค้นหายืดเต็มที่เหลือ */
+    .filter button { border: none; cursor: pointer; }
+
 </style>
 @endsection
 
@@ -41,7 +48,31 @@
     @if (session('success'))
         <div class="alert">{{ session('success') }}</div>
     @endif
+    {{-- ===== ฟอร์มค้นหา/กรอง (GET = ค่าจะต่อท้าย URL) ===== --}}
+    <form method="GET" action="{{ route('community.index') }}" class="filter">
+        {{-- request('q') = ค่าที่ค้นหาอยู่ เพื่อให้ช่องยังจำคำเดิมหลัง reload --}}
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="🔍 ค้นหาชื่อกลุ่ม...">
 
+        <select name="sport_id">
+            <option value="">ทุกกีฬา</option>
+            @foreach ($sports as $sport)
+                <option value="{{ $sport->id }}" {{ request('sport_id') == $sport->id ? 'selected' : '' }}>
+                    {{ $sport->name }}
+                </option>
+            @endforeach
+        </select>
+
+        <select name="privacy">
+            <option value="">ทุกประเภท</option>
+            <option value="public" {{ request('privacy') == 'public' ? 'selected' : '' }}>🌐 Public</option>
+            <option value="private" {{ request('privacy') == 'private' ? 'selected' : '' }}>🔒 Private</option>
+        </select>
+
+        <button type="submit" class="btn">ค้นหา</button>
+        {{-- ล้างตัวกรอง = กลับไปหน้าเดิมที่ไม่มีค่าใน URL --}}
+        <a href="{{ route('community.index') }}" class="btn outline">ล้าง</a>
+    </form>
+    
     <div class="cm-grid">
         {{-- วนลูปแสดงทุกกลุ่ม ถ้าไม่มีเลยจะไปที่ @empty --}}
         @forelse ($communities as $community)
@@ -68,8 +99,13 @@
                 </div>
             </a>
         @empty
-            <p class="muted">ยังไม่มี Community — ลองสร้างกลุ่มแรกเลย!</p>
-        @endforelse
+            {{-- ถ้ากำลังค้นหาอยู่ แสดงข้อความต่างจากตอนยังไม่มีกลุ่มเลย --}}
+            @if (request('q') || request('sport_id') || request('privacy'))
+                <p class="muted">ไม่พบกลุ่มที่ตรงกับการค้นหา</p>
+            @else
+                <p class="muted">ยังไม่มี Community — ลองสร้างกลุ่มแรกเลย!</p>
+            @endif
+            @endforelse
     </div>
 
 </div>

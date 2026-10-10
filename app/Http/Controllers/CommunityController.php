@@ -10,15 +10,33 @@ use Illuminate\Support\Facades\Storage; // ใช้ลบไฟล์รูป�
 
 class CommunityController extends Controller
 {
-    // หน้ารวม Community ทั้งหมด
-    public function index()
+    // หน้ารวม Community ทั้งหมด + ค้นหา/กรอง
+    public function index(Request $request)
     {
-        $communities = Community::with('sport')
-            ->withCount('approvedMembers') // ได้ตัวแปร approved_members_count ไว้แสดงจำนวนสมาชิก
-            ->latest()
-            ->get();
+        // เริ่มสร้างคำสั่ง query (ยังไม่ดึงข้อมูล)
+        $query = Community::with('sport')
+            ->withCount('approvedMembers'); // ได้ approved_members_count ไว้แสดงจำนวนสมาชิก
 
-        return view('community.index', compact('communities'));
+        // ถ้ากรอกคำค้น → หาชื่อกลุ่มที่มีคำนั้นอยู่
+        if ($request->filled('q')) {
+            $query->where('name', 'like', '%' . $request->q . '%');
+        }
+
+        // ถ้าเลือกกีฬา → เอาเฉพาะกลุ่มกีฬานั้น
+        if ($request->filled('sport_id')) {
+            $query->where('sport_id', $request->sport_id);
+        }
+
+        // ถ้าเลือก public/private → กรองตามนั้น
+        if ($request->filled('privacy')) {
+            $query->where('privacy', $request->privacy);
+        }
+
+        $communities = $query->latest()->get(); // ดึงข้อมูลจริง ใหม่สุดก่อน
+
+        $sports = Sport::orderBy('name')->get(); // สำหรับ dropdown กรองกีฬา
+
+        return view('community.index', compact('communities', 'sports'));
     }
 
     // หน้าฟอร์มสร้าง Community
