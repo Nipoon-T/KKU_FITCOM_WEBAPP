@@ -23,6 +23,11 @@
     .search input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; }
     .search button, .pager a { padding: 8px 16px; border: none; border-radius: 8px; background: #70c5d3; color: #fff; text-decoration: none; cursor: pointer; }
     .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 14px; }
+
+    .leaderboard { table-layout: fixed; }
+    .leaderboard .rank { width: 48px; text-align: left; }
+    .leaderboard .lb-name { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .leaderboard .lb-points { width: 90px; text-align: right; font-weight: bold; }
 </style>
 @endsection
 
@@ -45,17 +50,19 @@
         </div>
         <div class="card">
             <h2>🏆 แต้มสูงสุด</h2>
-            @forelse ($leaderboard as $i => $row)
-                <table>
-                    <tr>
-                        <td class="rank">#{{ $i + 1 }}</td>
-                        <td>{{ $row->user?->name ?? '(ผู้ใช้ถูกลบ)' }}</td>
-                        <td>{{ number_format($row->total) }} แต้ม</td>
-                    </tr>
-                </table>
-            @empty
+            @if ($leaderboard->isEmpty())
                 <p>ยังไม่มีใครได้แต้ม</p>
-            @endforelse
+            @else
+                <table class="leaderboard">
+                    @foreach ($leaderboard as $i => $row)
+                        <tr>
+                            <td class="rank">#{{ $i + 1 }}</td>
+                            <td class="lb-name">{{ $row->user?->name ?? '(ผู้ใช้ถูกลบ)' }}</td>
+                            <td class="lb-points">{{ number_format($row->total) }} แต้ม</td>
+                        </tr>
+                    @endforeach
+                </table>
+            @endif
         </div>
 
     </div>
