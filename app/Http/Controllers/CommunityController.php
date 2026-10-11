@@ -20,7 +20,7 @@ class CommunityController extends Controller
 
         // ถ้ากรอกคำค้น → หาชื่อกลุ่มที่มีคำนั้นอยู่
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%');
+            $query->where('name', 'like', '%'.$request->q.'%');
         }
 
         // ถ้าเลือกกีฬา → เอาเฉพาะกลุ่มกีฬานั้น
@@ -47,6 +47,7 @@ class CommunityController extends Controller
 
         return view('community.create', compact('sports'));
     }
+
     // หน้า "จัดการกลุ่มของฉัน"
     public function mine()
     {
@@ -71,6 +72,7 @@ class CommunityController extends Controller
 
         return view('community.mine', compact('ownedCommunities', 'memberships'));
     }
+
     // บันทึก Community ใหม่
     public function store(Request $request)
     {
@@ -211,7 +213,7 @@ class CommunityController extends Controller
 
         $member->update(['status' => 'approved']);
 
-        $message = 'อนุมัติ ' . $member->user->name . ' แล้ว';
+        $message = 'อนุมัติ '.$member->user->name.' แล้ว';
 
         // ถ้าเรียกมาจาก JavaScript (AJAX) → ตอบเป็น JSON
         if (request()->expectsJson()) {
@@ -230,7 +232,7 @@ class CommunityController extends Controller
         $name = $member->user->name; // เก็บชื่อไว้ก่อนลบ
         $member->delete();
 
-        $message = 'ปฏิเสธคำขอของ ' . $name . ' แล้ว';
+        $message = 'ปฏิเสธคำขอของ '.$name.' แล้ว';
 
         if (request()->expectsJson()) {
             return response()->json(['message' => $message]);
@@ -326,6 +328,7 @@ class CommunityController extends Controller
             ->route('community.index')
             ->with('success', 'ลบกลุ่มแล้ว');
     }
+
     // ===== ตรวจและบันทึกรูปปกที่ส่งมาเป็นข้อความ Base64 =====
     // คืนค่า path ของไฟล์ ถ้าสำเร็จ / คืนค่า null ถ้ารูปไม่ถูกต้อง
     private function saveCoverImage(string $data): ?string
@@ -356,12 +359,12 @@ class CommunityController extends Controller
         }
 
         // 5) ตั้งชื่อไฟล์แบบสุ่ม แล้วบันทึกลง storage/app/public/communities
-        $path = 'communities/' . Str::random(40) . '.jpg';
+        $path = 'communities/'.Str::random(40).'.jpg';
         Storage::disk('public')->put($path, $binary);
 
         return $path;
     }
-    
+
     // ===== ฟังก์ชันช่วยเช็คสิทธิ์ (ใช้ภายใน Controller นี้เท่านั้น) =====
     private function checkOwnerAndMember(Community $community, CommunityMember $member): void
     {

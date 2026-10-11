@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/communities/{community}/edit', [CommunityController::class, 'edit'])->name('community.edit');
     Route::put('/communities/{community}', [CommunityController::class, 'update'])->name('community.update');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('community.destroy');
-    
+
     // สมาชิก: เข้าร่วม / ออกจากกลุ่ม
     Route::post('/communities/{community}/join', [CommunityController::class, 'join'])->name('community.join');
     Route::post('/communities/{community}/leave', [CommunityController::class, 'leave'])->name('community.leave');
