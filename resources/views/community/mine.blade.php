@@ -25,7 +25,7 @@
 
     {{-- ===== ส่วนที่ 1: กลุ่มที่ฉันเป็นเจ้าของ ===== --}}
     <div class="cm-card">
-        <h2>👑 กลุ่มที่ฉันเป็นเจ้าของ ({{ $ownedCommunities->count() }})</h2>
+        <h2> กลุ่มที่ฉันเป็นเจ้าของ ({{ $ownedCommunities->count() }})</h2>
 
         @forelse ($ownedCommunities as $community)
             <div class="row">
@@ -38,12 +38,12 @@
                 <div>
                     {{-- มีคำขอค้างอยู่ → แสดงป้ายสีส้มเตือน --}}
                     @if ($community->pending_members_count > 0)
-                        <span class="cm-badge warn">🔔 รออนุมัติ {{ $community->pending_members_count }} คน</span>
+                        <span class="cm-badge warn"> รออนุมัติ {{ $community->pending_members_count }} คน</span>
                     @endif
 
                     {{-- ปุ่มอนุมัติ/ปฏิเสธอยู่ในหน้า show อยู่แล้ว จึงลิงก์ไปที่นั่น --}}
                     <a href="{{ route('community.show', $community) }}" class="btn">จัดการคำขอ</a>
-                    <a href="{{ route('community.edit', $community) }}" class="btn outline">✏️ แก้ไข</a>
+                    <a href="{{ route('community.edit', $community) }}" class="btn outline"> แก้ไข</a>
                 </div>
             </div>
         @empty
@@ -70,7 +70,7 @@
                 @if ($membership->status == 'approved')
                     <span class="cm-badge">✅ สมาชิก</span>
                 @else
-                    <span class="cm-badge warn">⏳ รออนุมัติ</span>
+                    <span class="cm-badge warn"> รออนุมัติ</span>
                 @endif
             </div>
         @empty

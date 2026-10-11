@@ -39,7 +39,7 @@
         <h1>Community</h1>
         {{-- ห่อปุ่ม 2 ปุ่มไว้ด้วยกัน ให้อยู่ชิดขวา --}}
         <div>
-            <a href="{{ route('community.mine') }}" class="btn outline">⚙️ จัดการกลุ่มของฉัน</a>
+            <a href="{{ route('community.mine') }}" class="btn outline">จัดการกลุ่มของฉัน</a>
             <a href="{{ route('community.create') }}" class="btn">+ สร้าง Community</a>
         </div>
     </div>

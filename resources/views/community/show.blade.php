@@ -67,16 +67,16 @@
         {{-- ===== ปุ่มตามสถานะของผู้ใช้ ===== --}}
         @if ($isOwner)
             {{-- 1) เป็นเจ้าของกลุ่ม --}}
-            <span class="cm-badge">👑 คุณเป็นเจ้าของกลุ่มนี้</span>
+            <span class="cm-badge"> คุณเป็นเจ้าของกลุ่มนี้</span>
             {{-- ปุ่มไปหน้าแก้ไข (อยู่ใน @if ($isOwner) จึงเห็นเฉพาะเจ้าของ) --}}
-            <a href="{{ route('community.edit', $community) }}" class="btn outline small">✏️ แก้ไขกลุ่ม</a>
+            <a href="{{ route('community.edit', $community) }}" class="btn outline small"> แก้ไขกลุ่ม</a>
 
         @elseif ($isApprovedMember)
             {{-- 2) เป็นสมาชิกแล้ว → ออกจากกลุ่มได้ --}}
             <form method="POST" action="{{ route('community.leave', $community) }}"
                   onsubmit="return confirm('ต้องการออกจากกลุ่มนี้ใช่ไหม?')">
                 @csrf {{-- token กันการปลอมคำขอ ต้องมีทุกฟอร์ม POST --}}
-                <span class="cm-badge">✅ คุณเป็นสมาชิกแล้ว</span>
+                <span class="cm-badge"> คุณเป็นสมาชิกแล้ว</span>
                 <button type="submit" class="btn outline small">ออกจากกลุ่ม</button>
             </form>
 
@@ -84,7 +84,7 @@
             {{-- 3) ส่งคำขอแล้ว รออนุมัติ → ยกเลิกคำขอได้ (ใช้ route leave เดียวกัน) --}}
             <form method="POST" action="{{ route('community.leave', $community) }}">
                 @csrf
-                <span class="cm-badge">⏳ รอเจ้าของกลุ่มอนุมัติ</span>
+                <span class="cm-badge"> รอเจ้าของกลุ่มอนุมัติ</span>
                 <button type="submit" class="btn outline small">ยกเลิกคำขอ</button>
             </form>
 
@@ -153,7 +153,7 @@
         @foreach ($community->approvedMembers as $member)
             <div class="row">
                 <span>{{ $member->user->name }}</span>
-                <span class="muted">{{ $member->role === 'owner' ? '👑 เจ้าของ' : 'สมาชิก' }}</span>
+                <span class="muted">{{ $member->role === 'owner' ? ' เจ้าของ' : 'สมาชิก' }}</span>
             </div>
         @endforeach
     </div>
@@ -191,7 +191,7 @@
             @endforelse
         @else
             {{-- คนนอก / รออนุมัติ --}}
-            <p class="muted">🔒 เข้าร่วมกลุ่มเพื่อดูและเขียนโพสต์</p>
+            <p class="muted">เข้าร่วมกลุ่มเพื่อดูและเขียนโพสต์</p>
         @endif
     </div>
 
