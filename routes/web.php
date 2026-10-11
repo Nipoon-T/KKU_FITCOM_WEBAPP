@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ActivityController;
+use App\Http\Controllers\Admin\BadgeController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserBadgeController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -66,6 +68,16 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // มอบ/ยึดเหรียญรายคน
+    Route::get('users/{user}', [UserBadgeController::class, 'show'])->name('users.show');
+    Route::post('users/{user}/badges/{badge}', [UserBadgeController::class, 'store'])->name('users.badges.store');
+    Route::delete('users/{user}/badges/{badge}', [UserBadgeController::class, 'destroy'])->name('users.badges.destroy');
+
+    // สร้าง/ลบเหรียญพิเศษ
+    Route::get('badges', [BadgeController::class, 'index'])->name('badges.index');
+    Route::post('badges', [BadgeController::class, 'store'])->name('badges.store');
+    Route::delete('badges/{badge}', [BadgeController::class, 'destroy'])->name('badges.destroy');
 });
 
 require __DIR__.'/settings.php';

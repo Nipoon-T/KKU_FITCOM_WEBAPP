@@ -9,6 +9,7 @@
         ['route' => 'dashboard', 'label' => 'Dashboard ของฉัน', 'icon' => '📊', 'auth' => true], // คนที่ 5
         ['route' => 'profile.setup', 'label' => 'โปรไฟล์ของฉัน', 'icon' => '👤', 'auth' => true],  // คนที่ 1
         ['route' => 'admin.dashboard', 'label' => 'จัดการระบบ', 'icon' => '🛠️', 'admin' => true], // คนที่ 5
+        ['route' => 'admin.badges.index', 'label' => 'เหรียญพิเศษ', 'icon' => '🏅', 'admin' => true],
     ];
 
     $isAdmin = auth()->check() && auth()->user()->role === 'admin';
