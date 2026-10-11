@@ -4,7 +4,7 @@
     $menuLinks = [
         ['route' => 'home', 'label' => 'หน้าแรก', 'icon' => '🏠'],
         ['route' => 'activities.index', 'label' => 'ค้นหากิจกรรม', 'icon' => '🏃'],          // คนที่ 3
-        ['route' => 'communities.index', 'label' => 'Community', 'icon' => '👥'],            // คนที่ 2
+        ['route' => 'community.index', 'label' => 'Community', 'icon' => '👥'],            // คนที่ 2
         ['route' => 'recommendations.index', 'label' => 'แนะนำสำหรับคุณ', 'icon' => '✨', 'auth' => true], // คนที่ 4
         ['route' => 'dashboard', 'label' => 'Dashboard ของฉัน', 'icon' => '📊', 'auth' => true], // คนที่ 5
         ['route' => 'profile.setup', 'label' => 'โปรไฟล์ของฉัน', 'icon' => '👤', 'auth' => true],  // คนที่ 1

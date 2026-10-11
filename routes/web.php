@@ -22,11 +22,30 @@ Route::get('/test', function () {
     return view('test');
 });
 
+// ===== Community (คนที่ 2) — ต้องล็อกอินก่อนทุก route =====
 Route::middleware('auth')->group(function () {
+    // ดูรายการ / สร้างกลุ่ม
     Route::get('/communities', [CommunityController::class, 'index'])->name('community.index');
-    Route::get('/communities/create', [CommunityController::class, 'create'])->name('community.create');
+    Route::get('/communities/create', [CommunityController::class, 'create'])->name('community.create'); // ต้องอยู่ก่อน {community} ไม่งั้น "create" จะถูกมองเป็น id
+    Route::get('/communities/my', [CommunityController::class, 'mine'])->name('community.mine'); // จัดการกลุ่มของฉัน (ต้องอยู่ก่อน {community} เหมือน create)
     Route::post('/communities', [CommunityController::class, 'store'])->name('community.store');
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('community.show');
+
+    // owner: แก้ไข / ลบกลุ่ม
+    Route::get('/communities/{community}/edit', [CommunityController::class, 'edit'])->name('community.edit');
+    Route::put('/communities/{community}', [CommunityController::class, 'update'])->name('community.update');
+    Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('community.destroy');
+
+    // สมาชิก: เข้าร่วม / ออกจากกลุ่ม
+    Route::post('/communities/{community}/join', [CommunityController::class, 'join'])->name('community.join');
+    Route::post('/communities/{community}/leave', [CommunityController::class, 'leave'])->name('community.leave');
+
+    // owner: อนุมัติ / ปฏิเสธคำขอ ({member} = id ในตาราง community_members)
+    Route::post('/communities/{community}/members/{member}/approve', [CommunityController::class, 'approve'])->name('community.approve');
+    Route::post('/communities/{community}/members/{member}/reject', [CommunityController::class, 'reject'])->name('community.reject');
+
+    // โพสต์ในกลุ่ม
+    Route::post('/communities/{community}/posts', [CommunityController::class, 'storePost'])->name('community.posts.store');
 });
 
 Route::middleware('auth')->group(function () {

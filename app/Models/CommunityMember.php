@@ -16,11 +16,17 @@ class CommunityMember extends Model
         'status',
     ];
 
+    /**
+     * @return BelongsTo<Community, $this>
+     */
     public function community(): BelongsTo
     {
         return $this->belongsTo(Community::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
