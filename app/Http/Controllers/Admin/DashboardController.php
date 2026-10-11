@@ -71,17 +71,6 @@ class DashboardController extends Controller
             ->with('user')
             ->get();
 
-        // ตารางผู้ใช้ ค้นหาด้วยชื่อหรืออีเมล
-        $search = trim((string) $request->query('q', ''));
-        $users = User::query()
-            ->when($search !== '', fn ($query) => $query->where(
-                fn ($w) => $w->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-            ))
-            ->orderByDesc('created_at')
-            ->paginate(10)
-            ->withQueryString();
-
         return view('admin.dashboard', compact(
             'stats', 'chartLabels', 'chartUsers', 'chartCheckins',
             'leaderboard', 'users', 'search'
