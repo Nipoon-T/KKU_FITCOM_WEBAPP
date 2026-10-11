@@ -7,6 +7,7 @@ use App\Models\CommunityMember;
 use App\Models\Sport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage; // ใช้ลบไฟล์รูปปกเก่า
+use Illuminate\Support\Str; // ใช้สุ่มชื่อไฟล์รูป
 
 class CommunityController extends Controller
 {
@@ -78,16 +79,26 @@ class CommunityController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'sport_id' => ['nullable', 'exists:sports,id'],
-            'cover_image' => ['nullable', 'image', 'max:5120'], // รูปไม่เกิน 5MB
+            'cover_image_data' => ['nullable', 'string'], // รูปที่บีบแล้ว (ข้อความ Base64 จาก JS)
             'privacy' => ['required', 'in:public,private'],
         ]);
 
         $validated['created_by'] = auth()->id(); // คนที่ล็อกอินอยู่คือผู้สร้าง
 
-        // ถ้ามีรูปปก ให้เก็บไว้ที่ storage/app/public/communities
-        if ($request->hasFile('cover_image')) {
-            $validated['cover_image'] = $request->file('cover_image')
-                ->store('communities', 'public');
+        unset($validated['cover_image_data']); // ไม่ใช่คอลัมน์ในตาราง เอาออกก่อนบันทึก
+
+        // ถ้ามีรูปปก → ตรวจและบันทึกด้วยฟังก์ชัน saveCoverImage (อยู่ท้ายไฟล์)
+        if ($request->filled('cover_image_data')) {
+            $path = $this->saveCoverImage($request->cover_image_data);
+
+            // รูปไม่ผ่านการตรวจ → กลับไปหน้าฟอร์มพร้อมข้อความ error
+            if ($path === null) {
+                return back()
+                    ->withErrors(['cover_image' => 'รูปปกไม่ถูกต้อง กรุณาเลือกรูปใหม่'])
+                    ->withInput();
+            }
+
+            $validated['cover_image'] = $path; // เก็บ path ไว้บันทึกลง DB
         }
 
         $community = Community::create($validated);
@@ -267,16 +278,27 @@ class CommunityController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'sport_id' => ['nullable', 'exists:sports,id'],
-            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'cover_image_data' => ['nullable', 'string'],
             'privacy' => ['required', 'in:public,private'],
         ]);
 
-        // ถ้าเลือกรูปใหม่: ลบรูปเก่าทิ้ง แล้วเก็บรูปใหม่
-        if ($request->hasFile('cover_image')) {
-            if ($community->cover_image) {
-                Storage::disk('public')->delete($community->cover_image);
+        unset($validated['cover_image_data']);
+
+        // ถ้าเลือกรูปใหม่ → บันทึกรูปใหม่ก่อน ถ้าสำเร็จค่อยลบรูปเก่า
+        if ($request->filled('cover_image_data')) {
+            $path = $this->saveCoverImage($request->cover_image_data);
+
+            if ($path === null) {
+                return back()
+                    ->withErrors(['cover_image' => 'รูปปกไม่ถูกต้อง กรุณาเลือกรูปใหม่'])
+                    ->withInput();
             }
-            $validated['cover_image'] = $request->file('cover_image')->store('communities', 'public');
+
+            if ($community->cover_image) {
+                Storage::disk('public')->delete($community->cover_image); // ลบรูปเก่า
+            }
+
+            $validated['cover_image'] = $path;
         }
 
         $community->update($validated); // บันทึกค่าใหม่ลง DB
@@ -304,7 +326,42 @@ class CommunityController extends Controller
             ->route('community.index')
             ->with('success', 'ลบกลุ่มแล้ว');
     }
+    // ===== ตรวจและบันทึกรูปปกที่ส่งมาเป็นข้อความ Base64 =====
+    // คืนค่า path ของไฟล์ ถ้าสำเร็จ / คืนค่า null ถ้ารูปไม่ถูกต้อง
+    private function saveCoverImage(string $data): ?string
+    {
+        $prefix = 'data:image/jpeg;base64,';
 
+        // 1) ต้องขึ้นต้นด้วย data:image/jpeg;base64, (JS ของเราส่งแบบนี้เสมอ)
+        if (! str_starts_with($data, $prefix)) {
+            return null;
+        }
+
+        // 2) ตัดส่วนหัวออก แล้วแปลงข้อความกลับเป็นไฟล์รูป (true = ตรวจแบบเข้มงวด)
+        $binary = base64_decode(substr($data, strlen($prefix)), true);
+        if ($binary === false) {
+            return null;
+        }
+
+        // 3) ขนาดต้องไม่เกิน 2MB (หลังบีบแล้วปกติแค่หลักร้อย KB)
+        if (strlen($binary) > 2 * 1024 * 1024) {
+            return null;
+        }
+
+        // 4) ตรวจว่าเป็นรูป JPEG จริง (กันคนส่งไฟล์อื่นปลอมมา)
+        //    ใส่ @ ข้างหน้าเพื่อไม่ให้ PHP แสดง warning ถ้าไม่ใช่รูป
+        $info = @getimagesizefromstring($binary);
+        if ($info === false || $info['mime'] !== 'image/jpeg') {
+            return null;
+        }
+
+        // 5) ตั้งชื่อไฟล์แบบสุ่ม แล้วบันทึกลง storage/app/public/communities
+        $path = 'communities/' . Str::random(40) . '.jpg';
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
+    }
+    
     // ===== ฟังก์ชันช่วยเช็คสิทธิ์ (ใช้ภายใน Controller นี้เท่านั้น) =====
     private function checkOwnerAndMember(Community $community, CommunityMember $member): void
     {

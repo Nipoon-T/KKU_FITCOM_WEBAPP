@@ -79,11 +79,17 @@
                     <img src="{{ asset('storage/' . $community->cover_image) }}" alt="รูปปัจจุบัน" class="cover">
                 @endif
 
-                <input type="file" id="cover_image" name="cover_image" accept="image/*" style="margin-top:8px">
+                {{-- ไม่มี name = ไฟล์จริงไม่ถูกส่ง (JS ย่อแล้วใส่ hidden input แทน) --}}
+                <input type="file" id="cover_image" accept="image/*" style="margin-top:8px">
+                <input type="hidden" id="cover_image_data" name="cover_image_data" value="{{ old('cover_image_data') }}">
+
+                <div id="coverError" class="error"></div>
                 @error('cover_image') <div class="error">{{ $message }}</div> @enderror
 
                 {{-- preview รูปใหม่ --}}
-                <img id="coverPreview" alt="รูปใหม่" class="cover">
+                <img id="coverPreview" alt="รูปใหม่" class="cover"
+                     src="{{ old('cover_image_data') }}"
+                     style="{{ old('cover_image_data') ? 'display:block' : '' }}">
             </div>
 
             <button type="submit" class="btn">บันทึกการแก้ไข</button>
@@ -108,25 +114,5 @@
 @endsection
 
 @section('scripts')
-<script>
-    // preview รูปใหม่ด้วย FileReader (โค้ดเดียวกับหน้า create)
-    const input = document.getElementById('cover_image');
-    const preview = document.getElementById('coverPreview');
-
-    input.addEventListener('change', function () {
-        const file = input.files[0];
-
-        if (!file) {
-            preview.style.display = 'none';
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    });
-</script>
+    <script src="{{ asset('js/community.js') }}"></script>
 @endsection

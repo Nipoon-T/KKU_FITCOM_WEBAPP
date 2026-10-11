@@ -73,11 +73,24 @@
 
             {{-- รูปปก + preview --}}
             <div class="field">
-                <label for="cover_image">รูปปก (ไม่เกิน 5MB)</label>
-                <input type="file" id="cover_image" name="cover_image" accept="image/*">
+                <label for="cover_image">รูปปก (ระบบจะย่อรูปให้อัตโนมัติ)</label>
+
+                {{-- ไม่มี name = ไฟล์จริงจะไม่ถูกส่งไป server (JS จะย่อแล้วใส่ใน hidden input แทน) --}}
+                <input type="file" id="cover_image" accept="image/*">
+
+                {{-- รูปที่บีบแล้ว (ข้อความ Base64) ถูกส่งไปกับฟอร์มผ่านช่องนี้ --}}
+                {{-- old() = ถ้าฟอร์มไม่ผ่าน validate รูปที่เลือกไว้จะไม่หาย --}}
+                <input type="hidden" id="cover_image_data" name="cover_image_data" value="{{ old('cover_image_data') }}">
+
+                {{-- error จาก JS (เช่น เลือกไฟล์ที่ไม่ใช่รูป) --}}
+                <div id="coverError" class="error"></div>
+                {{-- error จาก Controller (รูปไม่ผ่านการตรวจ) --}}
                 @error('cover_image') <div class="error">{{ $message }}</div> @enderror
-                {{-- รูปที่เลือกจะไปแสดงใน img นี้ --}}
-                <img id="coverPreview" alt="ตัวอย่างรูปปก">
+
+                {{-- preview: ถ้ามีรูปเดิมจาก old() ให้แสดงเลย --}}
+                <img id="coverPreview" alt="ตัวอย่างรูปปก"
+                     src="{{ old('cover_image_data') }}"
+                     style="{{ old('cover_image_data') ? 'display:block' : '' }}">
             </div>
 
             <button type="submit" class="btn">สร้าง Community</button>
@@ -87,32 +100,7 @@
 </div>
 @endsection
 
-{{-- JavaScript เฉพาะหน้านี้ (ไปอยู่ที่ @yield('scripts') ท้าย layout) --}}
+{{-- โหลด JS ของ community (มีโค้ดย่อรูป + preview อยู่ในนั้นแล้ว) --}}
 @section('scripts')
-<script>
-    // หาช่องเลือกไฟล์ และรูป preview
-    const input = document.getElementById('cover_image');
-    const preview = document.getElementById('coverPreview');
-
-    // ทุกครั้งที่ผู้ใช้เลือกไฟล์ใหม่
-    input.addEventListener('change', function () {
-        const file = input.files[0]; // ไฟล์แรกที่เลือก
-
-        // ถ้ายกเลิกการเลือก ให้ซ่อน preview
-        if (!file) {
-            preview.style.display = 'none';
-            return;
-        }
-
-        const reader = new FileReader(); // ตัวอ่านไฟล์ของเบราว์เซอร์
-
-        // เมื่ออ่านไฟล์เสร็จ เอาผลลัพธ์ไปใส่เป็นรูป แล้วแสดงขึ้นมา
-        reader.onload = function (e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
-
-        reader.readAsDataURL(file); // อ่านไฟล์เป็นข้อมูลรูป (ยังไม่ได้อัปโหลด)
-    });
-</script>
+    <script src="{{ asset('js/community.js') }}"></script>
 @endsection
