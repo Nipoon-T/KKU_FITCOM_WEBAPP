@@ -171,9 +171,55 @@
         }
     });
 
-    coverInput.addEventListener('change', () => {
-        const file = coverInput.files[0];
-        if (!file) return;
+    // ย่อ + บีบรูปในเบราว์เซอร์ก่อนส่ง (เหมือนที่ Community ทำ) กันรูปใหญ่เกิน limit ของ PHP แล้ว failed to upload
+    const COVER_MAX_SIZE = 1600;
+    const COVER_QUALITY = 0.82;
+    let coverCompressing = false;
+
+    function compressCover(file) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, COVER_MAX_SIZE / img.width, COVER_MAX_SIZE / img.height);
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                URL.revokeObjectURL(url);
+                canvas.toBlob((blob) => {
+                    if (!blob) return reject(new Error('toBlob failed'));
+                    resolve(new File([blob], 'cover.jpg', { type: 'image/jpeg' }));
+                }, 'image/jpeg', COVER_QUALITY);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
+            img.src = url;
+        });
+    }
+
+    coverInput.addEventListener('change', async () => {
+        const original = coverInput.files[0];
+        if (!original) return;
+
+        coverCompressing = true;
+        let file;
+        try {
+            file = await compressCover(original);
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            coverInput.files = dt.files; // แทนที่ไฟล์เดิมด้วยไฟล์ที่บีบแล้ว
+        } catch (err) {
+            coverInput.value = '';
+            coverCompressing = false;
+            alert('ไม่สามารถอ่านรูปนี้ได้ กรุณาเลือกรูป JPG/PNG อื่น');
+            return;
+        }
+        coverCompressing = false;
 
         coverPreview.src = URL.createObjectURL(file);
         coverPreview.style.display = 'block';
@@ -239,6 +285,11 @@
     const form = document.querySelector('.act-form');
 
     form.addEventListener('submit', (event) => {
+        if (coverCompressing) {
+            event.preventDefault();
+            alert('กำลังย่อรูปปก กรุณารอสักครู่แล้วกดอีกครั้ง');
+            return;
+        }
         if (isCreating && coverInput.files.length === 0) {
             event.preventDefault();
             coverBox.style.borderColor = '#d9534f';
