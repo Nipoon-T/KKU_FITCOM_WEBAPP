@@ -6,6 +6,10 @@
 
     <title>@yield('title', 'KKU FitCom')</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -14,11 +18,10 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Noto Sans Thai', 'Segoe UI', Arial, sans-serif;
             background: #f7f7f7;
         }
 
-        /* ===== HEADER ===== */
         .header {
             height: 64px;
             background: #70c5d3;
@@ -32,7 +35,7 @@
             color: white;
         }
 
-        /* Hamburger */
+
         .menu-btn {
             width: 32px;
             height: 32px;
@@ -56,14 +59,12 @@
             border-radius: 2px;
         }
 
-        /* Logo / Name */
         .logo {
             font-size: 20px;
             font-weight: bold;
             color: white;
         }
 
-        /* Search */
         .search-btn {
             width: 32px;
             height: 32px;
@@ -104,7 +105,6 @@
             transform: rotate(45deg);
         }
 
-        /* ===== CONTENT ===== */
         .content {
             padding: 20px;
         }
@@ -129,23 +129,18 @@
 </head>
 
 <body>
-
-    <!-- Header -->
     <header class="header">
 
-                <!-- Hamburger -->
         <button class="menu-btn" id="menuBtn" aria-label="เปิดเมนู">
             <span></span>
             <span></span>
             <span></span>
         </button>
 
-        <!-- Logo -->
         <div class="logo">
             KKU FitCom
         </div>
 
-        <!-- Search: ไปหน้าค้นหากิจกรรม (ถ้ามีแล้ว) -->
         <a class="search-btn" href="{{ Route::has('activities.index') ? route('activities.index') : '#' }}" aria-label="ค้นหา">
             <div class="search-icon"></div>
         </a>
@@ -154,8 +149,6 @@
 
     @include('layouts.partials.menu')
 
-
-    <!-- เนื้อหาของแต่ละหน้า -->
     <main class="content">
         @yield('content')
     </main>
