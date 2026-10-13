@@ -322,4 +322,23 @@
 
     sportRadios.forEach((radio) => radio.addEventListener('change', filterLocationsBySport));
     filterLocationsBySport();
+
+    const actForm = document.querySelector('.act-form');
+
+    actForm.addEventListener('submit', (e) => {
+        if (coverCompressing) {
+            e.preventDefault();
+            return;
+        }
+        const btn = actForm.querySelector('.btn-submit');
+        btn.disabled = true;
+        btn.textContent = 'กำลังบันทึก...';
+    });
+
+    window.addEventListener('pageshow', (e) => {
+        const nav = performance.getEntriesByType('navigation')[0];
+        if (e.persisted || nav?.type === 'back_forward') {
+            location.reload();
+        }
+    });
 </script>
