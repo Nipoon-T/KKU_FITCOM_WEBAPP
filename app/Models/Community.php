@@ -12,6 +12,7 @@ class Community extends Model
         'name',
         'description',
         'cover_image',
+        'cover_position',
         'sport_id',
         'privacy',
         'created_by',
