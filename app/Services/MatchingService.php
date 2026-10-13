@@ -54,6 +54,7 @@ class MatchingService
     public function getCommunityRecommendations(User $user): Collection
     {
         $mySportIds = $user->sports->pluck('id')->toArray();
+        $weights = MatchWeight::pluck('weight_value', 'factor_name');
 
         // เอาคะแนนกิจกรรมที่คำนวณไว้แล้ว มาเฉลี่ยแยกตามกลุ่ม
         $activityScores = [];
@@ -79,7 +80,11 @@ class MatchingService
                 $activityPart = $activityScores[$community->id] / 100;
             }
 
-            $score = ($sportPart * 0.6) + ($activityPart * 0.4);
+            // น้ำหนักอ่านจากตาราง match_weights (ถ้ายังไม่มีใช้ค่า 0.6 / 0.4)
+            $sportWeight = $weights['community_sport'] ?? 0.6;
+            $activityWeight = $weights['community_activity'] ?? 0.4;
+
+            $score = ($sportPart * $sportWeight) + ($activityPart * $activityWeight);
             $community->setAttribute('match_score', round($score * 100));
         }
 
@@ -99,7 +104,7 @@ class MatchingService
         return 0;
     }
 
-    // 2) เป้าหมาย goal เป็นข้อความที่ user พิมพ์เอง เลยเช็คว่ามีคำนี้อยู่ไหม
+    // 2) เป้าหมาย goal เลือกจาก dropdown ในหน้าโปรไฟล์ (ลดน้ำหนัก, เพิ่มกล้ามเนื้อ, สุขภาพทั่วไป, ...)
     private function goalScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->goal) {
@@ -122,7 +127,7 @@ class MatchingService
         return 0.5;
     }
 
-    // 3) ระดับ skill_level ของ user เป็นข้อความ แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
+    // 3) ระดับ skill_level ของ user เป็นข้อความ (เริ่มต้น/ปานกลาง/ผู้เชี่ยวชาญ) แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
     private function skillScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->skill_level) {
@@ -135,7 +140,7 @@ class MatchingService
             $level = 1;
         } elseif (str_contains($text, 'กลาง')) {
             $level = 2;
-        } elseif (str_contains($text, 'สูง')) {
+        } elseif (str_contains($text, 'สูง') || str_contains($text, 'เชี่ยวชาญ')) {
             $level = 3;
         } elseif (is_numeric($text)) {
             $level = (int) $text;
@@ -185,7 +190,7 @@ class MatchingService
         return 0;
     }
 
-    // 5) สถานที่ ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location มั้ย
+    // 5) สถานที่ พื้นที่สะดวกในโปรไฟล์เก็บเป็นพิกัด "lat,lng" เลยเทียบระยะทางกับสถานที่จัดกิจกรรม
     private function locationScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->preferred_location || ! $activity->location) {
@@ -193,6 +198,28 @@ class MatchingService
         }
 
         $place = $profile->preferred_location;
+
+        if (str_contains($place, ',')) {
+            $parts = explode(',', $place);
+            $km = $this->distanceKm(
+                (float) $parts[0],
+                (float) ($parts[1] ?? 0),
+                (float) $activity->location->lat,
+                (float) $activity->location->lng
+            );
+
+            // ไม่เกิน 3 กม. = 1, ไม่เกิน 8 กม. = 0.5, ไกลกว่านั้น = 0
+            if ($km <= 3) {
+                return 1;
+            }
+            if ($km <= 8) {
+                return 0.5;
+            }
+
+            return 0;
+        }
+
+        // เผื่อข้อมูลเก่าที่เก็บเป็นข้อความ เช่น "มข" ให้เช็คแบบเดิม
         $name = $activity->location->name ?? '';
         $address = $activity->location->address ?? '';
 
@@ -201,5 +228,17 @@ class MatchingService
         }
 
         return 0;
+    }
+
+    // ระยะทางระหว่าง 2 พิกัด หน่วยกิโลเมตร (สูตร Haversine)
+    private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return 6371 * 2 * asin(sqrt($a));
     }
 }
