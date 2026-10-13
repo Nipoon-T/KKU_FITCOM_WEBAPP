@@ -38,6 +38,12 @@ class MatchingService
         $activities = Activity::with(['sport', 'location', 'community'])
             ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
             ->whereDate('date', '>=', today())
+            ->where(function ($q) use ($user) {
+                // ไม่สังกัดกลุ่ม หรือกลุ่มไม่ใช่ private หรือเราเป็นสมาชิกที่อนุมัติแล้ว
+                $q->whereNull('community_id')
+                    ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'))
+                    ->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            })
             ->whereDoesntHave('participants', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('status', 'registered');
             })
@@ -65,6 +71,11 @@ class MatchingService
         $groupActivities = Activity::with(['sport', 'location'])
             ->whereNotNull('community_id')
             ->whereDate('date', '>=', today())
+            ->where(function ($q) use ($user) {
+                $q->whereNull('community_id')
+                    ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'))
+                    ->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            })
             ->get();
 
         $activityScores = [];
