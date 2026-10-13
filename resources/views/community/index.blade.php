@@ -11,7 +11,7 @@
 
     {{-- หัวหน้า + ปุ่ม (เหมือนหน้าค้นหากิจกรรม) --}}
     <div class="cm-top">
-        <h1>Community</h1>
+        <h1>ค้นหา Community</h1>
         <div>
             <a href="{{ route('community.mine') }}" class="btn outline">กลุ่มของฉัน</a>
             <a href="{{ route('community.create') }}" class="btn">+ สร้าง Community</a>
