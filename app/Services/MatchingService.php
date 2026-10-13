@@ -23,8 +23,9 @@ class MatchingService
         $weights = MatchWeight::pluck('weight_value', 'factor_name');
 
         // ซ่อนเฉพาะกิจกรรมที่ user ยังลงทะเบียนอยู่ ซึ่งยกเลิกแล้วยังเห็น
-        $activities = Activity::with(['sport', 'location'])
-            ->whereDate('date', '>=', today())   // เอาเฉพาะกิจกรรมที่ยังไม่ถึงวัน วันนี้ยังนับอยู่
+        $activities = Activity::with(['sport', 'location', 'community'])
+            ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
+            ->whereDate('date', '>=', today())
             ->whereDoesntHave('participants', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('status', 'registered');
             })
