@@ -28,7 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.mine') }}" class="back-link">← กลับ</a>
+    <a href="{{ route('activities.mine') }}" class="back-link" onclick="if (document.referrer && new URL(document.referrer).origin === location.origin && !/\/(create|edit)\/?$/.test(new URL(document.referrer).pathname)) { history.back(); return false; }">← กลับ</a>
 
     <h1>เช็คชื่อ: {{ $activity->name }}</h1>
 
