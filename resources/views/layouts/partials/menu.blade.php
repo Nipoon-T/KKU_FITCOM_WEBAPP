@@ -3,7 +3,7 @@
     $menuLinks = [
         ['route' => 'home', 'label' => 'หน้าแรก', 'icon' => '🏠'],
         ['route' => 'activities.index', 'label' => 'ค้นหากิจกรรม', 'icon' => '🏃'],          // คนที่ 3
-        ['route' => 'community.index', 'label' => 'Community', 'icon' => '👥'],            // คนที่ 2
+        ['route' => 'community.index', 'label' => 'ค้นหา Community', 'icon' => '👥'],            // คนที่ 2
         ['route' => 'recommendations.index', 'label' => 'แนะนำสำหรับคุณ', 'icon' => '✨', 'auth' => true], // คนที่ 4
         ['route' => 'activities.mine', 'label' => 'กิจกรรมของฉัน', 'icon' => '📋', 'auth' => true], // คนที่ 3
         ['route' => 'dashboard', 'label' => 'Dashboard ของฉัน', 'icon' => '📊', 'auth' => true], // คนที่ 5
