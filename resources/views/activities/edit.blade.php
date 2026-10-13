@@ -50,6 +50,7 @@
         background: rgba(0,0,0,.55); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 20px;
     }
     .field-err { color: #d9534f; font-size: 12px; margin-top: 4px; }
+    .hint { font-size: 12px; color: #888; margin-top: 6px; }
     .cover-change-btn {
         position: absolute; top: 10px; right: 10px; z-index: 2;
         background: #fff; border: none; border-radius: 20px;
