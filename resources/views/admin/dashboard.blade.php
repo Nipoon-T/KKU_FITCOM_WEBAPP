@@ -21,8 +21,9 @@
     .tag.admin { background: #70c5d3; color: #fff; }
     .search { display: flex; gap: 8px; margin-bottom: 12px; }
     .search input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; }
-    .search button, .pager a { padding: 8px 16px; border: none; border-radius: 8px; background: #70c5d3; color: #fff; text-decoration: none; cursor: pointer; }
-    .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 14px; }
+    .search button, .pager a { display: inline-block; padding: 8px 16px; border: none; border-radius: 8px; background: #70c5d3; color: #fff; text-decoration: none; cursor: pointer; }
+    .pager { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 14px; }
+    .pager-btns { display: flex; gap: 8px; }
 
     .leaderboard { table-layout: fixed; }
     .leaderboard .rank { width: 48px; text-align: left; }
