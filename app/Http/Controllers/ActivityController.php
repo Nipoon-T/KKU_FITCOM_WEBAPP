@@ -185,6 +185,10 @@ class ActivityController extends Controller
             return $this->registerResult($request, 'กิจกรรมนี้จบไปแล้ว', false);
         }
 
+        if (! $this->canJoin($activity)) {
+            return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
+        }
+
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
 
         if ($registeredCount >= $activity->max_participants) {
@@ -369,6 +373,17 @@ class ActivityController extends Controller
     private function hasEnded(Activity $activity): bool
     {
         return Carbon::parse($activity->date)->isBefore(today());
+    }
+
+    private function canJoin(Activity $activity): bool
+    {
+        $community = $activity->community;
+
+        if (! $community || $community->privacy !== 'private') {
+            return true;
+        }
+
+        return $community->isApprovedMember(auth()->user());
     }
 
     private function isActivityDay(Activity $activity): bool

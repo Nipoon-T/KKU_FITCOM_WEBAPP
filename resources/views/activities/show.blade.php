@@ -74,9 +74,13 @@
             <p>กิจกรรมนี้จบไปแล้ว</p>
         @elseif ($registeredCount >= $activity->max_participants)
             <p>กิจกรรมเต็มแล้ว</p>
+        @elseif (! $canJoin)
+            <p>🔒 กลุ่มไพรเวท ต้องเป็นสมาชิกก่อน</p>
+            <a href="{{ route('community.show', $activity->community) }}" class="btn" style="margin-top: 8px;">
+                ไปหน้ากลุ่มเพื่อขอเข้าร่วม
+            </a>
         @else
             @guest
-                {{-- ยังไม่ login: กดแล้วแค่แสดงข้อความ ไม่ส่งคำขอ --}}
                 <button type="button" class="btn"
                         onclick="document.getElementById('loginNotice').style.display = 'block'">
                     เข้าร่วมกิจกรรม
