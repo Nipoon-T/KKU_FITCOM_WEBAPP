@@ -21,7 +21,7 @@ class UserBadgeController extends Controller
         return view('admin.users.show', compact('user', 'badges', 'earned'));
     }
 
-    //มอบเหรียญให้ผู้ใช้
+    // มอบเหรียญให้ผู้ใช้
     public function store(User $user, Badge $badge): JsonResponse
     {
         $exists = UserBadge::where('user_id', $user->id)->where('badge_id', $badge->id)->exists();

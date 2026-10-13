@@ -32,7 +32,6 @@ class BadgeController extends Controller
             'icon.required' => 'กรุณาใส่ไอคอน (emoji)',
         ]);
 
-
         Badge::create($data + ['condition_type' => 'manual', 'condition_value' => 0]);
 
         return back()->with('status', 'สร้างเหรียญ "'.$data['name'].'" แล้ว');

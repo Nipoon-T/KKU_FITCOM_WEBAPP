@@ -44,7 +44,7 @@ class DemoGamificationSeeder extends Seeder
             foreach ($days as $daysAgo) {
                 $date = now()->subDays($daysAgo);
 
-                //กิจกรรมวันเดียวกันใช้ร่วมกัน จะไม่สร้างซ้ำ
+                // กิจกรรมวันเดียวกันใช้ร่วมกัน จะไม่สร้างซ้ำ
                 $activities[$daysAgo] ??= Activity::create([
                     'name' => 'วิ่งเช้า demo '.$date->format('d/m'),
                     'sport_id' => $sport->id,
