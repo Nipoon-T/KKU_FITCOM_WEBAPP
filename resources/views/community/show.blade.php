@@ -64,12 +64,23 @@
             </form>
 
         @else
-            <form method="POST" action="{{ route('community.join', $community) }}">
-                @csrf
-                <button type="submit" class="btn big">
+            @guest
+                {{-- ยังไม่ login: กดแล้วแค่แสดงข้อความ ไม่เด้งไปหน้า login --}}
+                <button type="button" class="btn big"
+                        onclick="document.getElementById('loginNotice').style.display = 'block'">
                     {{ $community->privacy === 'private' ? 'ขอเข้าร่วมกลุ่ม' : 'เข้าร่วมกลุ่ม' }}
                 </button>
-            </form>
+                <p id="loginNotice" class="flash-err" style="display: none; margin-top: 8px;">
+                    กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
+                </p>
+            @else
+                <form method="POST" action="{{ route('community.join', $community) }}">
+                    @csrf
+                    <button type="submit" class="btn big">
+                        {{ $community->privacy === 'private' ? 'ขอเข้าร่วมกลุ่ม' : 'เข้าร่วมกลุ่ม' }}
+                    </button>
+                </form>
+            @endguest
         @endif
     </div>
 
