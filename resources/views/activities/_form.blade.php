@@ -50,7 +50,8 @@
             <input type="hidden" id="cover_image_data" name="cover_image_data" value="">
             <input type="hidden" id="cover_position" name="cover_position"
                 value="{{ old('cover_position', $activity?->cover_position ?? '50% 50%') }}">
-            @error('cover_image_data') <p class="field-err">{{ $message }}</p> @enderror
+            <p class="hint">ระบบจะย่อรูปให้อัตโนมัติ</p>
+                @error('cover_image_data') <p class="field-err">{{ $message }}</p> @enderror
             @error('cover_position') <p class="field-err">{{ $message }}</p> @enderror
         </div>
 
@@ -67,7 +68,7 @@
     </div>
 
     <div class="form-card">
-        <h2>2. เลือกประเภทกิจกรรมและสถานที่</h2>
+        <h2>2. ประเภทกิจกรรมและสถานที่</h2>
 
         <fieldset>
             <legend>ประเภทกิจกรรม</legend>

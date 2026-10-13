@@ -46,7 +46,7 @@
     </div>
 
     <form method="GET" action="{{ route('activities.index') }}" id="filter-form" class="filter-card">
-        <input type="text" name="q" value="{{ request('q') }}" placeholder="ค้นหากิจกรรม & คอมมูนิตี้ที่คุณชอบ" class="search-box">
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="🔍 ค้นหากิจกรรม & คอมมูนิตี้ที่คุณชอบ" class="search-box">
 
         <div class="filter-row">
             <fieldset>
