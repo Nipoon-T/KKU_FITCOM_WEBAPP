@@ -12,8 +12,16 @@ class HomeController extends Controller
     public function index(): View
     {
         $sports = Sport::all();
-        $communities = Community::latest()->take(6)->get();
-        $activities = Activity::where('date', '>=', now())->orderBy('date')->take(6)->get();
+
+        // โหลดกีฬามาพร้อมกัน จะได้ไม่ query ซ้ำทีละการ์ด
+        $communities = Community::with('sport')->latest()->take(6)->get();
+
+        // whereDate เทียบแค่วันที่ กิจกรรมของวันนี้จึงยังแสดงอยู่
+        $activities = Activity::with('sport')
+            ->whereDate('date', '>=', today())
+            ->orderBy('date')
+            ->take(6)
+            ->get();
 
         return view('home', [
             'sports' => $sports,
