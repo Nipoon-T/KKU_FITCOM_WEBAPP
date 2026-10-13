@@ -69,6 +69,17 @@ class ActivityController extends Controller
         if ($request->filled('to')) {
             $query->where('end_time', '<=', $request->input('to'));
         }
+        
+        $user = auth()->user();
+
+        $query->where(function ($q) use ($user) {
+            $q->whereNull('community_id')
+                ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'));
+
+            if ($user) {
+                $q->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            }
+        });
 
         $activities = $query->orderBy('date')->orderBy('start_time')->get();
         $sports = Sport::orderBy('name')->get();
@@ -103,8 +114,9 @@ class ActivityController extends Controller
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
         $myParticipation = $activity->participants()->where('user_id', auth()->id())->first();
         $levels = self::LEVELS;
+        $membersOnly = $this->isLockedForUser($activity);
 
-        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels'));
+        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels', 'membersOnly'));
     }
 
     public function edit(Activity $activity): View
@@ -174,6 +186,10 @@ class ActivityController extends Controller
     public function register(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
+
+        if ($this->isLockedForUser($activity)) {
+            return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
+        }
 
         $existing = $activity->participants()->where('user_id', $userId)->first();
 
@@ -336,7 +352,6 @@ class ActivityController extends Controller
         ];
     }
 
-    // รับรูปปกที่ JS ย่อแล้วเป็น base64 (วิธีเดียวกับ Community) คืน path หรือ null ถ้าไม่ผ่าน
     private function saveCoverImage(string $data): ?string
     {
         $prefix = 'data:image/jpeg;base64,';
@@ -364,6 +379,17 @@ class ActivityController extends Controller
     private function abortUnlessOwner(Activity $activity): void
     {
         abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
+    }
+
+    private function isLockedForUser(Activity $activity): bool
+    {
+        $community = $activity->community;
+
+        if ($community === null || $community->privacy !== 'private') {
+            return false;
+        }
+
+        return ! $community->isApprovedMember(auth()->user());
     }
 
     private function hasEnded(Activity $activity): bool
