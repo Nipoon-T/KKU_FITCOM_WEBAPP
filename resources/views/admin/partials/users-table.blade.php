@@ -16,7 +16,7 @@
 
  <div class="pager">
     <span>หน้า {{ $users->currentPage() }} / {{ $users->lastPage() }} (ทั้งหมด {{ $users->total() }} คน)</span>
-    <span>
+    <span class="pager-btns">
         @if ($users->previousPageUrl()) <a href="{{ $users->previousPageUrl() }}">← ก่อนหน้า</a> @endif
         @if ($users->nextPageUrl()) <a href="{{ $users->nextPageUrl() }}">ถัดไป →</a> @endif
     </span>
