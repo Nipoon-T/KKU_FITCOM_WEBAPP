@@ -395,3 +395,4 @@ class ActivityController extends Controller
 
         return back()->withErrors(['checkin' => $message]);
     }
+}
