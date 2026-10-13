@@ -1,16 +1,16 @@
 @php
-    // ===== รายการเมนู: แต่ละคนแก้แค่บรรทัดของตัวเอง =====
-    // auth => ต้อง login ถึงเห็น, admin => เห็นเฉพาะ admin
+    //รายการเมนู
     $menuLinks = [
         ['route' => 'home', 'label' => 'หน้าแรก', 'icon' => '🏠'],
         ['route' => 'activities.index', 'label' => 'ค้นหากิจกรรม', 'icon' => '🏃'],          // คนที่ 3
         ['route' => 'community.index', 'label' => 'Community', 'icon' => '👥'],            // คนที่ 2
         ['route' => 'recommendations.index', 'label' => 'แนะนำสำหรับคุณ', 'icon' => '✨', 'auth' => true], // คนที่ 4
+        ['route' => 'activities.mine', 'label' => 'กิจกรรมของฉัน', 'icon' => '📋', 'auth' => true], // คนที่ 3
         ['route' => 'dashboard', 'label' => 'Dashboard ของฉัน', 'icon' => '📊', 'auth' => true], // คนที่ 5
+        ['route' => 'admin.badges.index', 'label' => 'เหรียญพิเศษ', 'icon' => '🏅', 'admin' => true],
         ['route' => 'profile.setup', 'label' => 'โปรไฟล์ของฉัน', 'icon' => '👤', 'auth' => true],  // คนที่ 1
         ['route' => 'admin.dashboard', 'label' => 'จัดการระบบ', 'icon' => '🛠️', 'admin' => true], // คนที่ 5
-        ['route' => 'admin.badges.index', 'label' => 'เหรียญพิเศษ', 'icon' => '🏅', 'admin' => true],
-        ['route' => 'activities.mine', 'label' => 'กิจกรรมของฉัน', 'icon' => '📋', 'auth' => true], // คนที่ 3
+        
     ];
 
     $isAdmin = auth()->check() && auth()->user()->role === 'admin';
