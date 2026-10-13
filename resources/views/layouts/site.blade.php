@@ -22,6 +22,10 @@
             background: #f7f7f7;
         }
 
+        input, select, textarea, button {
+            font-family: inherit;
+        }
+
         .header {
             height: 64px;
             background: #70c5d3;
@@ -34,7 +38,6 @@
 
             color: white;
         }
-
 
         .menu-btn {
             width: 32px;
@@ -123,8 +126,6 @@
         
     </style>
     
-
-    {{-- ไฟล์ CSS เฉพาะหน้า (ถ้ามี) ให้แต่ละหน้าใส่เพิ่มตรงนี้ได้ --}}
     @yield('styles')
 </head>
 
