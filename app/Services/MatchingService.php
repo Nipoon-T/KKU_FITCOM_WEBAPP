@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Activity;
+use App\Models\Community;
 use App\Models\MatchWeight;
 use App\Models\User;
 use App\Models\UserAvailability;
@@ -44,6 +45,45 @@ class MatchingService
         }
 
         return $activities->sortByDesc('match_score')->values();
+    }
+
+    // คำนวณ % match ของ Community ที่ user ยังไม่ได้เข้าร่วม
+    /**
+     * @return Collection<int, Community>
+     */
+    public function getCommunityRecommendations(User $user): Collection
+    {
+        $mySportIds = $user->sports->pluck('id')->toArray();
+
+        // เอาคะแนนกิจกรรมที่คำนวณไว้แล้ว มาเฉลี่ยแยกตามกลุ่ม
+        $activityScores = [];
+        foreach ($this->getRecommendations($user)->groupBy('community_id') as $communityId => $list) {
+            $activityScores[$communityId] = $list->avg('match_score');
+        }
+
+        // ซ่อนกลุ่มที่เป็นสมาชิกอยู่ หรือส่งคำขอรออนุมัติอยู่
+        $communities = Community::with('sport')
+            ->withCount('approvedMembers')
+            ->whereDoesntHave('members', function ($q) use ($user) {
+                $q->where('user_id', $user->id)->whereIn('status', ['approved', 'pending']);
+            })
+            ->get();
+
+        foreach ($communities as $community) {
+            // กีฬาของกลุ่มตรงกับที่ user สนใจไหม
+            $sportPart = in_array($community->sport_id, $mySportIds) ? 1 : 0;
+
+            // คะแนนเฉลี่ยของกิจกรรมในกลุ่ม (ไม่มีกิจกรรม = 0.5)
+            $activityPart = 0.5;
+            if (isset($activityScores[$community->id])) {
+                $activityPart = $activityScores[$community->id] / 100;
+            }
+
+            $score = ($sportPart * 0.6) + ($activityPart * 0.4);
+            $community->setAttribute('match_score', round($score * 100));
+        }
+
+        return $communities->sortByDesc('match_score')->values();
     }
 
     // 1) กีฬาตรงกับที่ user สนใจไหม ตรง = 1, ไม่ตรง = 0
