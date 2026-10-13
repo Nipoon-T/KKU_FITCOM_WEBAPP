@@ -29,6 +29,8 @@
     .leaderboard .rank { width: 48px; text-align: left; }
     .leaderboard .lb-name { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .leaderboard .lb-points { width: 90px; text-align: right; font-weight: bold; }
+
+    .card .sub { font-size: 12px; color: #999; margin-top: 6px; }
 </style>
 @endsection
 
@@ -39,7 +41,18 @@
     <div class="stats">
         <div class="card"><h3>สมาชิกทั้งหมด</h3><div class="big">{{ number_format($stats['users']) }}</div></div>
         <div class="card"><h3>กิจกรรมทั้งหมด</h3><div class="big">{{ number_format($stats['activities']) }}</div></div>
-        <div class="card"><h3>การสมัครเข้าร่วม</h3><div class="big">{{ number_format($stats['registrations']) }}</div></div>
+        <div class="card">
+            <h3>Community ทั้งหมด</h3>
+            <div class="big">{{ number_format($stats['communities']) }}</div>
+        </div>
+        <div class="card">
+            <h3>ลงทะเบียนที่ยังมีผล</h3>
+            <div class="big">{{ number_format($stats['registrations_active']) }}</div>
+            <div class="sub">
+                ทั้งหมด {{ number_format($stats['registrations_total']) }}
+                · ยกเลิก {{ number_format($stats['registrations_cancelled']) }}
+            </div>
+        </div>
         <div class="card"><h3>เช็คชื่อแล้ว</h3><div class="big">{{ number_format($stats['checkins']) }}</div></div>
         <div class="card"><h3>แต้มที่แจกไปทั้งหมด</h3><div class="big">{{ number_format($stats['points']) }}</div></div>
     </div>
