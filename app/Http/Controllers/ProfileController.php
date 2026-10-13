@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Sport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -32,13 +33,27 @@ class ProfileController extends Controller
             'sports' => 'nullable|array',
             'sports.*' => 'exists:sports,id',
             'availability' => 'nullable|array',
+            'avatar_data' => ['nullable', 'string', 'starts_with:data:image/jpeg;base64'],
         ]);
 
         $user = auth()->user();
 
+        $data = $request->only(['goal', 'skill_level', 'preferred_location', 'bio']);
+
+        if ($request->filled('avatar_data')) {
+            $encoded = substr($request->input('avatar_data'), strlen('data:image/jpeg;base64,'));
+            $binary = base64_decode($encoded, true);
+
+            if ($binary !== false) {
+                $path = 'avatars/'.$user->id.'-'.time().'.jpg';
+                Storage::disk('public')->put($path, $binary);
+                $data['avatar'] = $path;
+            }
+        }
+
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
-            $request->only(['goal', 'skill_level', 'preferred_location', 'bio'])
+            $data
         );
 
         $user->sports()->sync($request->input('sports', []));

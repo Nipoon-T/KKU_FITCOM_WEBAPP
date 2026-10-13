@@ -28,7 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.index') }}" class="back-link">← กลับ</a>
+    <a href="{{ request('from') === 'recommendations' ? route('recommendations.index') : route('activities.index') }}" class="back-link">← กลับ</a>
 
     @if (session('success'))
         <p class="flash-ok">{{ session('success') }}</p>
