@@ -22,8 +22,32 @@
 
     <form method="POST" action="{{ route('profile.update') }}">
         @csrf
+        @if ($errors->any())
+            <div style="color: #c62828; margin-bottom: 12px;">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
 
-                <div class="pf-card">
+        <div class="pf-card" style="text-align: center;">
+            @if ($user->profile && $user->profile->avatar)
+                <img id="avatarPreview" src="{{ asset('storage/'.$user->profile->avatar) }}" alt="รูปโปรไฟล์"
+                    style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; background: #e0e0e0;">
+            @else
+                <img id="avatarPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAOLi4gAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="รูปโปรไฟล์"
+                    style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; background: #e0e0e0;">
+            @endif
+            <label class="pf-label" for="avatar">รูปโปรไฟล์</label>
+            <input type="file" id="avatar" accept="image/*">
+            <input type="hidden" name="avatar_data" id="avatar_data">
+            <p id="avatarError" style="color: #c62828; font-size: 13px;"></p>
+            @error('avatar_data')
+                <p style="color: #c62828; font-size: 13px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="pf-card">
             <label class="pf-label" for="goal">เป้าหมายการออกกำลังกาย</label>
             @php $currentGoal = old('goal', $user->profile->goal ?? ''); @endphp
             <select name="goal" id="goal" class="pf-input">
@@ -63,7 +87,7 @@
             <textarea name="bio" id="bio" rows="3" class="pf-input">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
         </div>
 
-                <div class="pf-card">
+        <div class="pf-card">
             <span class="pf-label">กีฬาที่สนใจ (เลือกได้หลายอัน)</span>
             @php
                 $selectedSports = $user->sports->pluck('id')->toArray();
@@ -110,4 +134,6 @@
         <button type="submit" class="pf-btn">บันทึก</button>
     </form>
 </div>
+
+<script src="{{ asset('js/avatar.js') }}"></script>
 @endsection
