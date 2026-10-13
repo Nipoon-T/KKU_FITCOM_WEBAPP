@@ -175,16 +175,15 @@ class CommunityController extends Controller
             ->with('success', 'สร้าง Community สำเร็จ');
     }
 
-    // หน้ารายละเอียด Community
+    // หน้ารายละเอียด Community (Guest ดูได้)
     public function show(Community $community)
     {
-        $user = auth()->user();
+        $user = auth()->user(); // ถ้ายังไม่ login จะเป็น null
 
         $community->load([
             'sport',
-            'creator.profile',              // ผู้สร้าง + รูปโปรไฟล์ (user_profiles.avatar)
-            'approvedMembers.user.profile', // สมาชิก + รูปโปรไฟล์
-            // กิจกรรมที่ยังไม่ถึงวัน + ประเภท/สถานที่ + นับคนที่ลงทะเบียน (ตารางของคนที่ 3)
+            'creator.profile',
+            'approvedMembers.user.profile',
             'activities' => fn ($query) => $query
                 ->with(['sport', 'location'])
                 ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
@@ -193,14 +192,15 @@ class CommunityController extends Controller
                 ->orderBy('start_time'),
         ]);
 
-        $membership = $community->membershipOf($user);      // แถวสมาชิกของเรา (หรือ null)
-        $isOwner = $community->isOwner($user);              // เป็นเจ้าของไหม
-        $isApprovedMember = $community->isApprovedMember($user); // เป็นสมาชิกแล้วไหม
+        // Guest (ไม่ได้ login) จะไม่มีสถานะสมาชิกใดๆ
+        $membership = $user ? $community->membershipOf($user) : null;
+        $isOwner = $user ? $community->isOwner($user) : false;
+        $isApprovedMember = $user ? $community->isApprovedMember($user) : false;
 
         // โพสต์: ให้เห็นเฉพาะสมาชิกที่อนุมัติแล้ว
         $posts = $isApprovedMember
             ? $community->posts()->with('user')->latest('created_at')->get()
-            : collect(); // คนนอกได้รายการว่าง
+            : collect();
 
         // คำขอที่รออนุมัติ: ให้เห็นเฉพาะ owner
         $pendingMembers = $isOwner
