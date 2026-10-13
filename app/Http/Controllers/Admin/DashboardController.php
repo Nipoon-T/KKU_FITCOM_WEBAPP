@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\ActivityParticipant;
 use App\Models\Attendance;
+use App\Models\Community;
 use App\Models\PointLog;
 use App\Models\User;
-use App\Models\Community;
-use App\Models\CommunityMember;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +34,7 @@ class DashboardController extends Controller
             return view('admin.partials.users-table', compact('users'));
         }
 
-// ตัวเลขสรุปภาพรวม
+        // ตัวเลขสรุปภาพรวม
         $stats = [
             'users' => User::count(),
             'activities' => Activity::count(),
