@@ -34,8 +34,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.index') }}" class="back-link" onclick="if (document.referrer && new URL(document.referrer).origin === location.origin && !/\/(create|edit)\/?$/.test(new URL(document.referrer).pathname)) { history.back(); return false; }">← กลับ</a>
-
+    <a href="{{ route('activities.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
     <div class="act-top">
         <h1>จัดการกิจกรรมของคุณ</h1>
         <a href="{{ route('activities.create') }}" class="btn">+ สร้างกิจกรรม</a>
