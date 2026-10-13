@@ -31,7 +31,7 @@
 
 /* ===== หน้ารวม (index) ===== */
 .filter-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
-.search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
+.search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
 .filter-row fieldset { border: none; padding: 0; min-width: 160px; }
 .filter-row legend { font-size: 13px; color: #777; margin-bottom: 6px; padding: 0; }
@@ -43,8 +43,18 @@
 .cm-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; }
 .cm-card h3 { font-size: 16px; }
 .cm-card p { font-size: 13px; color: #555; margin: 0; }
-.cm-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
-.cm-card .btn { margin-top: 8px; align-self: flex-start; }
+.cm-card .btn { margin-top: auto; align-self: flex-start; } /* auto = ดันปุ่มไปชิดล่างการ์ดเสมอ */
+
+/* รูปปก: กว้างเต็มการ์ด สูงตายตัว 160px ทุกใบ / cover = ครอบรูปให้เต็มกรอบโดยไม่บิด */
+.cm-card img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 4px; display: block; }
+
+/* กลุ่มที่ไม่มีรูปปก: พื้นสีเทาอ่อน สูงเท่ารูปจริง (ไม่มีเส้นกรอบ) */
+.cm-cover-empty {
+    width: 100%; height: 160px; margin-bottom: 4px;
+    background: #f2f2f2; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 28px;
+}
 
 /* ป้ายเล็ก (กีฬา / สถานะ) */
 .cm-tag { display: inline-block; background: #e3f4f7; color: #3a9fb0; border-radius: 20px; padding: 2px 10px; font-size: 12px; width: fit-content; }
@@ -88,3 +98,38 @@
 .row-card .name a:hover { color: #3a9fb0; }
 .row-card .sub { font-size: 13px; color: #999; margin-left: 6px; }
 .row-card .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ===== รูปโปรไฟล์วงกลม ===== */
+.avatar { display: inline-flex; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); box-sizing: border-box; }
+.avatar-fallback { align-items: center; justify-content: center; background: #70c5d3; color: #fff; font-weight: bold; }  /* ไม่มีรูป = ตัวอักษรแรก */
+.avatar-more { align-items: center; justify-content: center; background: #e5e5e5; color: #777; font-size: 13px; font-weight: bold; } /* +N */
+
+/* ===== การ์ดผู้สร้าง ===== */
+.creator-card { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 12px; padding: 14px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+.creator-card .creator-label { font-size: 16px; font-weight: bold; margin: 0; }
+.creator-card .creator-name { font-size: 14px; color: #555; margin: 2px 0 0; }
+
+/* ===== แถวรูปสมาชิก ===== */
+.member-avatars { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* ===== การ์ดกิจกรรมในหน้ากลุ่ม ===== */
+.detail-card .cm-card { box-shadow: 0 2px 8px rgba(0,0,0,.10); }
+.detail-card .cm-card p { margin: 1px 0; font-size: 13px; color: #555; }
+.cm-card .btn.center { align-self: center; padding: 8px 32px; border-radius: 20px; } /* ปุ่มกลางการ์ด มุมโค้งแบบในภาพ */
+
+/* ===== หน้าจัดการกลุ่ม (dashboard) ===== */
+.stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; text-align: center; }
+.stat-label { font-size: 14px; color: #3a9fb0; font-weight: bold; margin: 0; }
+.stat-number { font-size: 40px; font-weight: bold; color: #222; margin: 6px 0 0; line-height: 1.1; }
+.stat-sub { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 13px; color: #555; margin-top: 8px; }
+.stat-card .cm-tag { margin-top: 10px; text-decoration: none; }
+
+/* แถวอันดับคะแนน */
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
+.rank-row:last-of-type { border-bottom: none; }
+.rank-no { width: 28px; height: 28px; border-radius: 50%; background: #f2f2f2; color: #777; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; flex-shrink: 0; }
+.rank-1 { background: #ffd54f; color: #7a5b00; }  /* ทอง */
+.rank-2 { background: #e0e0e0; color: #555; }     /* เงิน */
+.rank-3 { background: #ffcc80; color: #8d4b00; }  /* ทองแดง */
+.rank-name { flex: 1; font-size: 14px; }
+.rank-points { font-weight: bold; color: #3a9fb0; font-size: 14px; }

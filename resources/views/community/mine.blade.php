@@ -34,7 +34,7 @@
                 @if ($community->pending_members_count > 0)
                     <span class="cm-tag warn">🔔 รออนุมัติ {{ $community->pending_members_count }} คน</span>
                 @endif
-                <a href="{{ route('community.show', $community) }}" class="btn outline small">จัดการคำขอ</a>
+                <a href="{{ route('community.manage', $community) }}" class="btn outline small">จัดการกลุ่ม</a>
                 <a href="{{ route('community.edit', $community) }}" class="btn outline small">แก้ไข</a>
             </div>
         </div>

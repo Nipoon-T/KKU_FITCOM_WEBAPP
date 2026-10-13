@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Community;
 use App\Models\CommunityMember;
+use App\Models\PointLog;
 use App\Models\Sport;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // ใช้ลบไฟล์รูปปกเก่า
-use Illuminate\Support\Str; // ใช้สุ่มชื่อไฟล์รูป
+use Illuminate\Http\Request; // ใช้ลบไฟล์รูปปกเก่า
+use Illuminate\Support\Facades\Storage; // ใช้สุ่มชื่อไฟล์รูป
+use Illuminate\Support\Str; // อ่านคะแนน (ตารางของคนที่ 5)
 
 class CommunityController extends Controller
 {
@@ -73,6 +74,59 @@ class CommunityController extends Controller
         return view('community.mine', compact('ownedCommunities', 'memberships'));
     }
 
+    // หน้า "จัดการกลุ่มของคุณ" (dashboard ของกลุ่ม — owner เท่านั้น)
+    public function manage(Community $community)
+    {
+        abort_unless($community->isOwner(auth()->user()), 403);
+
+        // 1) สมาชิกที่อนุมัติแล้ว (พร้อมรูปโปรไฟล์) + จำนวนคำขอที่รออยู่
+        $members = $community->approvedMembers()->with('user.profile')->get();
+        $pendingCount = $community->pendingMembers()->count();
+
+        // 2) สถิติกิจกรรมตั้งแต่เปิดกลุ่ม
+        $totalActivities = $community->activities()->count();
+        $pastActivities = $community->activities()
+            ->whereDate('date', '<', now()->toDateString())
+            ->count();
+
+        // 3) อันดับคะแนน: รวมเฉพาะคะแนนที่ได้จาก "กิจกรรมของกลุ่มนี้"
+        $activityIds = $community->activities()->pluck('id');
+
+        // ได้ผลแบบ [user_id => คะแนนรวม] เช่น [2 => 30, 5 => 10]
+        $pointsByUser = PointLog::whereIn('activity_id', $activityIds)
+            ->whereIn('user_id', $members->pluck('user_id'))
+            ->groupBy('user_id')
+            ->selectRaw('user_id, SUM(points_change) as total')
+            ->pluck('total', 'user_id');
+
+        // จับคู่สมาชิกกับคะแนน (ไม่มีคะแนน = 0) แล้วเรียงมากไปน้อย เอา 10 อันดับ
+        $leaderboard = $members
+            ->map(fn ($member) => [
+                'user' => $member->user,
+                'points' => (int) ($pointsByUser[$member->user_id] ?? 0),
+            ])
+            ->sortByDesc('points')
+            ->take(10)
+            ->values();
+
+        // 4) กิจกรรมที่กำลังจะมาถึง เรียงจากใกล้ที่สุด
+        $upcoming = $community->activities()
+            ->whereDate('date', '>=', now()->toDateString())
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->get();
+
+        return view('community.manage', compact(
+            'community',
+            'members',
+            'pendingCount',
+            'totalActivities',
+            'pastActivities',
+            'leaderboard',
+            'upcoming',
+        ));
+    }
+
     // บันทึก Community ใหม่
     public function store(Request $request)
     {
@@ -121,30 +175,32 @@ class CommunityController extends Controller
             ->with('success', 'สร้าง Community สำเร็จ');
     }
 
-    // หน้ารายละเอียด Community
+    // หน้ารายละเอียด Community (Guest ดูได้)
     public function show(Community $community)
     {
-        $user = auth()->user();
+        $user = auth()->user(); // ถ้ายังไม่ login จะเป็น null
 
         $community->load([
             'sport',
-            'creator',
-            'approvedMembers.user', // รายชื่อสมาชิกที่อนุมัติแล้ว
-            // กิจกรรมที่ยังไม่ถึงวัน เรียงจากใกล้ไปไกล (ตารางของคนที่ 3)
+            'creator.profile',
+            'approvedMembers.user.profile',
             'activities' => fn ($query) => $query
+                ->with(['sport', 'location'])
+                ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
                 ->whereDate('date', '>=', now()->toDateString())
                 ->orderBy('date')
                 ->orderBy('start_time'),
         ]);
 
-        $membership = $community->membershipOf($user);      // แถวสมาชิกของเรา (หรือ null)
-        $isOwner = $community->isOwner($user);              // เป็นเจ้าของไหม
-        $isApprovedMember = $community->isApprovedMember($user); // เป็นสมาชิกแล้วไหม
+        // Guest (ไม่ได้ login) จะไม่มีสถานะสมาชิกใดๆ
+        $membership = $user ? $community->membershipOf($user) : null;
+        $isOwner = $user ? $community->isOwner($user) : false;
+        $isApprovedMember = $user ? $community->isApprovedMember($user) : false;
 
         // โพสต์: ให้เห็นเฉพาะสมาชิกที่อนุมัติแล้ว
         $posts = $isApprovedMember
             ? $community->posts()->with('user')->latest('created_at')->get()
-            : collect(); // คนนอกได้รายการว่าง
+            : collect();
 
         // คำขอที่รออนุมัติ: ให้เห็นเฉพาะ owner
         $pendingMembers = $isOwner

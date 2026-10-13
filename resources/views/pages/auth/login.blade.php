@@ -1,63 +1,83 @@
-<x-layouts::auth :title="__('Log in')">
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - KKU FitCom</title>
+    @include('partials.auth-card-style')
+</head>
+<body>
+    <main class="card">
+        <h1>เข้าสู่ระบบ</h1>
+        <p class="sub">กรอกอีเมลและรหัสผ่านเพื่อเข้าใช้งาน</p>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
+        @if (session('status'))
+            <div class="alert ok">{{ session('status') }}</div>
+        @endif
 
-        {{-- @chisel-passkeys --}}
-        <x-passkey-verify />
-        {{-- @end-chisel-passkeys --}}
+        @if ($errors->any() && ! $errors->has('email') && ! $errors->has('password'))
+            <div class="alert err">{{ $errors->first() }}</div>
+        @endif
 
-        <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
+        <form method="POST" action="{{ route('login.store') }}" data-busy="กำลังเข้าสู่ระบบ...">
             @csrf
 
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
+            <div class="field">
+                <label for="email">อีเมล</label>
+                <div class="input-wrap">
+                    <input type="email" id="email" name="email" value="{{ old('email') }}"
+                        placeholder="email@example.com" autocomplete="email" required autofocus
+                        class="{{ $errors->has('email') ? 'invalid' : '' }}">
+                </div>
+                @error('email') <p class="field-err">{{ $message }}</p> @enderror
+            </div>
 
-            <!-- Password -->
-            <div class="relative">
-                <flux:input
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
+            <div class="field">
+                <label for="password">รหัสผ่าน</label>
+                <div class="input-wrap has-toggle">
+                    <input type="password" id="password" name="password"
+                        placeholder="รหัสผ่านของคุณ" autocomplete="current-password" required
+                        class="{{ $errors->has('password') ? 'invalid' : '' }}">
+                    <button type="button" class="toggle-pw" data-target="password" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+                </div>
+                @error('password') <p class="field-err">{{ $message }}</p> @enderror
+            </div>
 
+            <div class="row">
+                <label class="remember">
+                    <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
+                    จดจำฉันไว้
+                </label>
                 @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
-                        {{ __('Forgot your password?') }}
-                    </flux:link>
+                    <a href="{{ route('password.request') }}">ลืมรหัสผ่าน?</a>
                 @endif
             </div>
 
-            <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
-
-            <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
-                    {{ __('Log in') }}
-                </flux:button>
-            </div>
+            <button type="submit" class="submit" data-test="login-button">เข้าสู่ระบบ</button>
         </form>
 
-        {{-- @chisel-registration --}}
-        <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Don\'t have an account?') }}</span>
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
-        {{-- @end-chisel-registration --}}
-    </div>
-</x-layouts::auth>
+        @if (Route::has('register'))
+            <p class="switch">ยังไม่มีบัญชี? <a href="{{ route('register') }}">สมัครสมาชิก</a></p>
+        @endif
+    </main>
+
+    <script>
+        document.querySelectorAll('.toggle-pw').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.textContent = show ? 'ซ่อน' : 'แสดง';
+            });
+        });
+
+        document.querySelectorAll('form[data-busy]').forEach((form) => {
+            form.addEventListener('submit', () => {
+                const btn = form.querySelector('.submit');
+                btn.disabled = true;
+                btn.textContent = form.dataset.busy;
+            });
+        });
+    </script>
+</body>
+</html>

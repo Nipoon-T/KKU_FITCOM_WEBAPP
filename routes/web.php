@@ -24,17 +24,16 @@ Route::get('/test', function () {
     return view('test');
 });
 
-// ===== Community (คนที่ 2) — ต้องล็อกอินก่อนทุก route =====
+// ===== Community (คนที่ 2) — route ที่ต้องล็อกอิน =====
 Route::middleware('auth')->group(function () {
-    // ดูรายการ / สร้างกลุ่ม
-    Route::get('/communities', [CommunityController::class, 'index'])->name('community.index');
+    // สร้างกลุ่ม
     Route::get('/communities/create', [CommunityController::class, 'create'])->name('community.create'); // ต้องอยู่ก่อน {community} ไม่งั้น "create" จะถูกมองเป็น id
     Route::get('/communities/my', [CommunityController::class, 'mine'])->name('community.mine'); // จัดการกลุ่มของฉัน (ต้องอยู่ก่อน {community} เหมือน create)
     Route::post('/communities', [CommunityController::class, 'store'])->name('community.store');
-    Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('community.show');
 
     // owner: แก้ไข / ลบกลุ่ม
     Route::get('/communities/{community}/edit', [CommunityController::class, 'edit'])->name('community.edit');
+    Route::get('/communities/{community}/manage', [CommunityController::class, 'manage'])->name('community.manage'); // dashboard ของกลุ่ม (owner)
     Route::put('/communities/{community}', [CommunityController::class, 'update'])->name('community.update');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('community.destroy');
 
@@ -50,13 +49,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community}/posts', [CommunityController::class, 'storePost'])->name('community.posts.store');
 });
 
+// ===== Activity (คนที่ 3) — route ที่ต้องล็อกอิน =====
 Route::middleware('auth')->group(function () {
     Route::get('/my-activities', [ActivityController::class, 'myActivities'])->name('activities.mine');
 
-    Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('/activities/create', [ActivityController::class, 'create'])->name('activities.create');
     Route::post('/activities', [ActivityController::class, 'store'])->name('activities.store');
-    Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
     Route::get('/activities/{activity}/edit', [ActivityController::class, 'edit'])->name('activities.edit');
     Route::put('/activities/{activity}', [ActivityController::class, 'update'])->name('activities.update');
     Route::delete('/activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
@@ -65,6 +63,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
     Route::get('/recommendations', [MatchingController::class, 'index'])->name('recommendations.index');
 });
+
+// ===== Guest ดูได้โดยไม่ต้อง login =====
+// ต้องอยู่หลังกลุ่มด้านบน เพื่อให้ /create และ /my ถูกจับคู่ก่อน {community} / {activity}
+Route::get('/communities', [CommunityController::class, 'index'])->name('community.index');
+Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('community.show');
+Route::get('/activities', [ActivityController::class, 'index'])->name('activities.index');
+Route::get('/activities/{activity}', [ActivityController::class, 'show'])->name('activities.show');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
