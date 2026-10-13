@@ -28,8 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.mine') }}" class="back-link">← กลับ</a>
-
+    <a href="{{ route('activities.mine') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
     <h1>เช็คชื่อ: {{ $activity->name }}</h1>
 
     @if (session('success'))

@@ -61,8 +61,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ route('activities.index') }}" class="back-link">← กลับ</a>
-
+    <a href="{{ route('activities.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
     <h1>สร้างกิจกรรม</h1>
 
     @include('activities._form', [

@@ -27,6 +27,7 @@
     .act-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; }
     .act-card h3 { font-size: 16px; }
     .act-card p { font-size: 13px; color: #555; margin: 0; }
+    .act-cover-empty { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; margin-bottom: 4px; background: #e6f6f9; }
     .act-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
     .act-tag { display: inline-block; background: #e3f4f7; color: #3a9fb0; border-radius: 20px; padding: 2px 10px; font-size: 12px; width: fit-content; }
     .act-card .btn { margin-top: 8px; align-self: flex-start; }
@@ -104,6 +105,8 @@
                     @if ($activity->cover_image)
                         <img src="{{ asset('storage/'.$activity->cover_image) }}" alt="{{ $activity->name }}"
                             style="object-position: {{ $activity->cover_position ?? '50% 50%' }};">
+                    @else
+                        <div class="act-cover-empty"></div>
                     @endif
                     <h3>{{ $activity->name }}</h3>
 

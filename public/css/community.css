@@ -1,0 +1,90 @@
+/* ===== หน้า Community (index / show / mine) — ค่าทั้งหมดคัดลอกจากหน้ากิจกรรม ===== */
+
+/* ----- กรอบหน้า (ความกว้างต่างกันตามหน้า เหมือนฝั่งกิจกรรม) ----- */
+.cm-wrap { max-width: 1000px; margin: 0 auto; padding: 0 4px; }  /* หน้ารวม */
+.cm-wrap.medium { max-width: 800px; }                              /* กลุ่มของฉัน */
+.cm-wrap.narrow { max-width: 700px; }                              /* รายละเอียด */
+
+/* ----- หัวหน้า + ลิงก์กลับ ----- */
+.cm-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.cm-top h1 { font-size: 22px; }
+.cm-wrap.medium .cm-top h1 { font-size: 20px; }
+.back-link { display: inline-block; margin-bottom: 12px; color: #3a9fb0; text-decoration: none; font-size: 14px; }
+
+/* ----- ปุ่ม ----- */
+.btn { display: inline-block; padding: 8px 16px; border-radius: 8px; background: #70c5d3; color: #fff; text-decoration: none; font-size: 14px; border: none; cursor: pointer; font-family: inherit; }
+.btn.outline { background: #fff; color: #3a9fb0; border: 1px solid #70c5d3; }
+.btn.danger { background: #fff; color: #d9534f; border: 1px solid #d9534f; }
+.btn.small { padding: 6px 14px; font-size: 13px; }
+.btn.big { padding: 10px 20px; font-size: 15px; }
+
+/* ----- ข้อความแจ้งผล ----- */
+.flash-ok { background: #e6f7ec; color: #2e9e5b; padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+.flash-err { background: #fdeaea; color: #d9534f; padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+/* ข้อความจาก community.js (อนุมัติ/ปฏิเสธแบบ AJAX) ใช้สีเดียวกัน */
+.alert { padding: 10px 16px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+.alert.success { background: #e6f7ec; color: #2e9e5b; }
+.alert.error { background: #fdeaea; color: #d9534f; }
+
+.empty { color: #777; padding: 24px; text-align: center; }
+.muted { color: #888; font-size: 13px; }
+
+/* ===== หน้ารวม (index) ===== */
+.filter-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
+.search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
+.filter-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.filter-row fieldset { border: none; padding: 0; min-width: 160px; }
+.filter-row legend { font-size: 13px; color: #777; margin-bottom: 6px; padding: 0; }
+.pill { display: inline-flex; align-items: center; gap: 4px; background: #f2f2f2; border-radius: 20px; padding: 6px 14px; margin: 0 6px 6px 0; font-size: 13px; cursor: pointer; }
+.pill input { accent-color: #70c5d3; }
+
+.cm-count { color: #777; font-size: 14px; margin-bottom: 12px; }
+.cm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.cm-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; }
+.cm-card h3 { font-size: 16px; }
+.cm-card p { font-size: 13px; color: #555; margin: 0; }
+.cm-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
+.cm-card .btn { margin-top: 8px; align-self: flex-start; }
+
+/* ป้ายเล็ก (กีฬา / สถานะ) */
+.cm-tag { display: inline-block; background: #e3f4f7; color: #3a9fb0; border-radius: 20px; padding: 2px 10px; font-size: 12px; width: fit-content; }
+.cm-tag.private { background: #fdeaea; color: #d9534f; }
+.cm-tag.warn { background: #fff4e0; color: #b9770e; }
+
+/* ===== หน้ารายละเอียด (show) ===== */
+.cover-hero { width: 100%; aspect-ratio: 16 / 9; max-height: 320px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; }
+.detail-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+.detail-card h1 { font-size: 20px; margin-bottom: 8px; }
+.detail-card h2 { font-size: 15px; color: #3a9fb0; margin-bottom: 12px; }
+.detail-card p { margin: 6px 0; font-size: 14px; color: #444; }
+.detail-card .desc { color: #666; }
+
+/* กล่องสถานะสมาชิก (ตรงกลาง เหมือนกล่อง "เข้าร่วมกิจกรรม") */
+.status-box { text-align: center; padding: 16px; }
+.status-box .status { font-size: 15px; font-weight: bold; color: #3a9fb0; margin-bottom: 10px; }
+
+/* กล่องสำหรับเจ้าของกลุ่ม */
+.owner-box { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; }
+.owner-box .label { font-size: 13px; color: #777; margin-bottom: 8px; }
+
+/* แถวในรายการ (คำขอ / กิจกรรม / สมาชิก) */
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; flex-wrap: wrap; }
+.list-row:last-child { border-bottom: none; }
+.list-row a { color: #222; text-decoration: none; font-weight: bold; }
+.list-row a:hover { color: #3a9fb0; }
+.list-row form { display: inline; }
+
+/* โพสต์ */
+.post-form textarea { width: 100%; min-height: 80px; padding: 9px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; box-sizing: border-box; resize: vertical; margin-bottom: 8px; }
+.post { padding: 12px 0; border-bottom: 1px solid #eee; }
+.post:last-child { border-bottom: none; }
+.post .author { font-weight: bold; font-size: 14px; }
+.post .content { margin-top: 4px; white-space: pre-line; }
+
+/* ===== หน้ากลุ่มของฉัน (mine) ===== */
+.sec-title { font-size: 16px; margin: 24px 0 12px; color: #3a9fb0; }
+.row-card { background: #fff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.row-card .name a { color: #222; text-decoration: none; font-weight: bold; }
+.row-card .name a:hover { color: #3a9fb0; }
+.row-card .sub { font-size: 13px; color: #999; margin-left: 6px; }
+.row-card .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }

@@ -28,8 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-    <a href="{{ request('from') === 'recommendations' ? route('recommendations.index') : route('activities.index') }}" class="back-link">← กลับ</a>
-
+    <a href="{{ request('from') === 'recommendations' ? route('recommendations.index') : route('activities.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
     @if (session('success'))
         <p class="flash-ok">{{ session('success') }}</p>
     @endif

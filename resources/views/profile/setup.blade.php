@@ -11,6 +11,11 @@
     .pf-chip { display: inline-flex; align-items: center; gap: 6px; background: #f1f1f1; padding: 6px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; }
     .pf-btn { padding: 10px 24px; background: #70c5d3; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .pf-ok { color: #2e7d32; margin-bottom: 12px; }
+    .pf-avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: #e0e0e0; display: block; margin: 0 auto 10px; cursor: pointer; }
+    .pf-file { display: none; }
+    .pf-upload { display: inline-block; padding: 8px 18px; background: #fff; color: #70c5d3; border: 1px solid #70c5d3; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .pf-upload:hover { background: #70c5d3; color: #fff; }
+    .pf-hint { font-size: 12px; color: #999; margin-top: 6px; }
 </style>
 
 <div class="pf-wrap">
@@ -22,8 +27,35 @@
 
     <form method="POST" action="{{ route('profile.update') }}">
         @csrf
+        @if ($errors->any())
+            <div style="color: #c62828; margin-bottom: 12px;">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        @endif
 
-                <div class="pf-card">
+        <div class="pf-card" style="text-align: center;">
+            <label for="avatar">
+                @if ($user->profile && $user->profile->avatar)
+                    <img id="avatarPreview" class="pf-avatar" src="{{ asset('storage/'.$user->profile->avatar) }}" alt="รูปโปรไฟล์">
+                @else
+                    <img id="avatarPreview" class="pf-avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAOLi4gAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="รูปโปรไฟล์">
+                @endif
+            </label>
+
+            <label for="avatar" class="pf-upload">เปลี่ยนรูปโปรไฟล์</label>
+            <input type="file" id="avatar" class="pf-file" accept="image/*">
+            <input type="hidden" name="avatar_data" id="avatar_data">
+
+            <p class="pf-hint">คลิกที่รูปหรือปุ่มเพื่อเลือกรูป</p>
+            <p id="avatarError" style="color: #c62828; font-size: 13px;"></p>
+            @error('avatar_data')
+                <p style="color: #c62828; font-size: 13px;">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="pf-card">
             <label class="pf-label" for="goal">เป้าหมายการออกกำลังกาย</label>
             @php $currentGoal = old('goal', $user->profile->goal ?? ''); @endphp
             <select name="goal" id="goal" class="pf-input">
@@ -63,7 +95,7 @@
             <textarea name="bio" id="bio" rows="3" class="pf-input">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
         </div>
 
-                <div class="pf-card">
+        <div class="pf-card">
             <span class="pf-label">กีฬาที่สนใจ (เลือกได้หลายอัน)</span>
             @php
                 $selectedSports = $user->sports->pluck('id')->toArray();
@@ -110,4 +142,6 @@
         <button type="submit" class="pf-btn">บันทึก</button>
     </form>
 </div>
+
+<script src="{{ asset('js/avatar.js') }}"></script>
 @endsection
