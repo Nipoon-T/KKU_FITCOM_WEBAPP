@@ -1,69 +1,89 @@
-<x-layouts::auth :title="__('Register')">
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Create an account')" :description="__('Enter your details below to create your account')" />
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก - KKU FitCom</title>
+    @include('partials.auth-card-style')
+</head>
+<body>
+    <main class="card">
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
+        <h1>สมัครสมาชิก</h1>
+        <p class="sub">กรอกข้อมูลเพื่อสร้างบัญชีของคุณ</p>
 
-        <form method="POST" action="{{ route('register.store') }}" class="flex flex-col gap-6">
+        @if (session('status'))
+            <div class="alert ok">{{ session('status') }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('register.store') }}" data-busy="กำลังสมัครสมาชิก...">
             @csrf
-            <!-- Name -->
-            <flux:input
-                name="name"
-                :label="__('Name')"
-                :value="old('name')"
-                type="text"
-                required
-                autofocus
-                autocomplete="name"
-                :placeholder="__('Full name')"
-            />
 
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
-
-            <!-- Password -->
-            <flux:input
-                name="password"
-                :label="__('Password')"
-                type="password"
-                required
-                autocomplete="new-password"
-                :placeholder="__('Password')"
-                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
-            />
-
-            <!-- Confirm Password -->
-            <flux:input
-                name="password_confirmation"
-                :label="__('Confirm password')"
-                type="password"
-                required
-                autocomplete="new-password"
-                :placeholder="__('Confirm password')"
-                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
-                viewable
-            />
-
-            <div class="flex items-center justify-end">
-                <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
-                    {{ __('Create account') }}
-                </flux:button>
+            <div class="field">
+                <label for="name">ชื่อ</label>
+                <div class="input-wrap">
+                    <input type="text" id="name" name="name" value="{{ old('name') }}"
+                        placeholder="ชื่อ-นามสกุล" autocomplete="name" required autofocus
+                        class="{{ $errors->has('name') ? 'invalid' : '' }}">
+                </div>
+                @error('name') <p class="field-err">{{ $message }}</p> @enderror
             </div>
+
+            <div class="field">
+                <label for="email">อีเมล</label>
+                <div class="input-wrap">
+                    <input type="email" id="email" name="email" value="{{ old('email') }}"
+                        placeholder="email@example.com" autocomplete="email" required
+                        class="{{ $errors->has('email') ? 'invalid' : '' }}">
+                </div>
+                @error('email') <p class="field-err">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="field">
+                <label for="password">รหัสผ่าน</label>
+                <div class="input-wrap has-toggle">
+                    <input type="password" id="password" name="password" placeholder="รหัสผ่าน" autocomplete="new-password" required
+                        passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
+                        class="{{ $errors->has('password') ? 'invalid' : '' }}">
+                    <button type="button" class="toggle-pw" data-target="password" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+                </div>
+                @error('password') <p class="field-err">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="field">
+                <label for="password_confirmation">ยืนยันรหัสผ่าน</label>
+                <div class="input-wrap has-toggle">
+                    <input type="password" id="password_confirmation" name="password_confirmation" placeholder="กรอกรหัสผ่านอีกครั้ง" autocomplete="new-password" required
+                        passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
+                        class="{{ $errors->has('password_confirmation') ? 'invalid' : '' }}">
+                    <button type="button" class="toggle-pw" data-target="password_confirmation" aria-label="แสดงหรือซ่อนรหัสผ่าน">แสดง</button>
+                </div>
+                @error('password_confirmation') <p class="field-err">{{ $message }}</p> @enderror
+            </div>
+
+            <button type="submit" class="submit" data-test="register-user-button">สมัครสมาชิก</button>
         </form>
 
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
-            <span>{{ __('Already have an account?') }}</span>
-            <flux:link :href="route('login')" wire:navigate>{{ __('Log in') }}</flux:link>
-        </div>
-    </div>
-</x-layouts::auth>
+        <p class="switch">มีบัญชีอยู่แล้ว? <a href="{{ route('login') }}">เข้าสู่ระบบ</a></p>
+    </main>
+
+    <script>
+        document.querySelectorAll('.toggle-pw').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.textContent = show ? 'ซ่อน' : 'แสดง';
+            });
+        });
+
+        document.querySelectorAll('form[data-busy]').forEach((form) => {
+            form.addEventListener('submit', () => {
+                const btn = form.querySelector('.submit');
+                btn.disabled = true;
+                btn.textContent = form.dataset.busy;
+            });
+        });
+    </script>
+</body>
+</html>
