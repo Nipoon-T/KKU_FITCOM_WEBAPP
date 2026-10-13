@@ -46,10 +46,11 @@
                     <button type="button" id="cover-pick-btn" class="cover-change-btn" style="display:none;">🖼️ เปลี่ยนรูป</button>
                 @endif
             </div>
-            <input type="file" id="cover_image" name="cover_image" accept="image/*" style="display:none;">
+            <input type="file" id="cover_image" accept="image/*" style="display:none;">
+            <input type="hidden" id="cover_image_data" name="cover_image_data" value="">
             <input type="hidden" id="cover_position" name="cover_position"
                 value="{{ old('cover_position', $activity?->cover_position ?? '50% 50%') }}">
-            @error('cover_image') <p class="field-err">{{ $message }}</p> @enderror
+            @error('cover_image_data') <p class="field-err">{{ $message }}</p> @enderror
             @error('cover_position') <p class="field-err">{{ $message }}</p> @enderror
         </div>
 
@@ -175,6 +176,7 @@
     const COVER_MAX_SIZE = 1600;
     const COVER_QUALITY = 0.82;
     let coverCompressing = false;
+    const coverDataInput = document.getElementById('cover_image_data');
 
     function compressCover(file) {
         return new Promise((resolve, reject) => {
@@ -192,10 +194,7 @@
                 ctx.fillRect(0, 0, w, h);
                 ctx.drawImage(img, 0, 0, w, h);
                 URL.revokeObjectURL(url);
-                canvas.toBlob((blob) => {
-                    if (!blob) return reject(new Error('toBlob failed'));
-                    resolve(new File([blob], 'cover.jpg', { type: 'image/jpeg' }));
-                }, 'image/jpeg', COVER_QUALITY);
+                resolve(canvas.toDataURL('image/jpeg', COVER_QUALITY));
             };
             img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
             img.src = url;
@@ -207,21 +206,20 @@
         if (!original) return;
 
         coverCompressing = true;
-        let file;
+        let dataUrl;
         try {
-            file = await compressCover(original);
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            coverInput.files = dt.files; // แทนที่ไฟล์เดิมด้วยไฟล์ที่บีบแล้ว
+            dataUrl = await compressCover(original);
         } catch (err) {
             coverInput.value = '';
+            coverDataInput.value = '';
             coverCompressing = false;
             alert('ไม่สามารถอ่านรูปนี้ได้ กรุณาเลือกรูป JPG/PNG อื่น');
             return;
         }
         coverCompressing = false;
+        coverDataInput.value = dataUrl;
 
-        coverPreview.src = URL.createObjectURL(file);
+        coverPreview.src = dataUrl;
         coverPreview.style.display = 'block';
         coverPreview.style.objectPosition = '50% 50%';
         coverPositionInput.value = '50% 50%';
@@ -290,7 +288,7 @@
             alert('กำลังย่อรูปปก กรุณารอสักครู่แล้วกดอีกครั้ง');
             return;
         }
-        if (isCreating && coverInput.files.length === 0) {
+        if (isCreating && coverDataInput.value === '') {
             event.preventDefault();
             coverBox.style.borderColor = '#d9534f';
             alert('กรุณาเลือกรูปปกกิจกรรมก่อนสร้าง');
