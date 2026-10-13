@@ -66,7 +66,7 @@ class CommunityController extends Controller
             ->get();
 
         // 2) กลุ่มที่ฉันเข้าร่วม (เป็น member ทั้ง approved และ pending)
-        $memberships = CommunityMember::with('community.sport') // ดึงข้อมูลกลุ่ม + กีฬามาด้วย
+        $memberships = CommunityMember::with(['community' => fn ($q) => $q->withCount('approvedMembers')]) // ดึงข้อมูลกลุ่ม + นับสมาชิก
             ->where('user_id', $userId)
             ->where('role', 'member')
             ->get();

@@ -8,7 +8,11 @@
 
 @section('content')
 <div class="cm-wrap narrow">
-    <a href="{{ route('community.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
+    <a href="{{ route('community.index') }}" class="back-link"
+        onclick="var r = document.referrer;
+                    if (r.indexOf(location.origin) === 0 && !/\/(edit|manage)(\?|#|$)/.test(r)) {
+                        event.preventDefault(); history.back();
+                    }">← กลับ</a>
 
     {{-- ข้อความแจ้งผล --}}
     @if (session('success'))
@@ -64,12 +68,23 @@
             </form>
 
         @else
-            <form method="POST" action="{{ route('community.join', $community) }}">
-                @csrf
-                <button type="submit" class="btn big">
+            @guest
+                {{-- ยังไม่ login: กดแล้วแค่แสดงข้อความ ไม่เด้งไปหน้า login --}}
+                <button type="button" class="btn big"
+                        onclick="document.getElementById('loginNotice').style.display = 'block'">
                     {{ $community->privacy === 'private' ? 'ขอเข้าร่วมกลุ่ม' : 'เข้าร่วมกลุ่ม' }}
                 </button>
-            </form>
+                <p id="loginNotice" class="flash-err" style="display: none; margin-top: 8px;">
+                    กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
+                </p>
+            @else
+                <form method="POST" action="{{ route('community.join', $community) }}">
+                    @csrf
+                    <button type="submit" class="btn big">
+                        {{ $community->privacy === 'private' ? 'ขอเข้าร่วมกลุ่ม' : 'เข้าร่วมกลุ่ม' }}
+                    </button>
+                </form>
+            @endguest
         @endif
     </div>
 

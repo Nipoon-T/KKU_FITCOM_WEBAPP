@@ -75,11 +75,23 @@
         @elseif ($registeredCount >= $activity->max_participants)
             <p>กิจกรรมเต็มแล้ว</p>
         @else
-            <form action="{{ route('activities.register', $activity) }}" method="POST" id="register-form">
-                @csrf
-                <button type="submit" class="btn">เข้าร่วมกิจกรรม</button>
-            </form>
-            <p id="register-message" class="flash-err" style="display:none;"></p>
+            @guest
+                {{-- ยังไม่ login: กดแล้วแค่แสดงข้อความ ไม่ส่งคำขอ --}}
+                <button type="button" class="btn"
+                        onclick="document.getElementById('loginNotice').style.display = 'block'">
+                    เข้าร่วมกิจกรรม
+                </button>
+                <p id="loginNotice" class="flash-err"
+                   style="display: none; margin-top: 8px; color: #d9534f; font-weight: normal;">
+                    กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
+                </p>
+            @else
+                <form action="{{ route('activities.register', $activity) }}" method="POST" id="register-form">
+                    @csrf
+                    <button type="submit" class="btn">เข้าร่วมกิจกรรม</button>
+                </form>
+                <p id="register-message" class="flash-err" style="display:none;"></p>
+            @endguest
         @endif
     </div>
 
