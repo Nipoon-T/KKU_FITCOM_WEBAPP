@@ -31,7 +31,7 @@
 
 /* ===== หน้ารวม (index) ===== */
 .filter-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 20px; }
-.search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
+.search-box { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; box-sizing: border-box; font-family: inherit; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
 .filter-row fieldset { border: none; padding: 0; min-width: 160px; }
 .filter-row legend { font-size: 13px; color: #777; margin-bottom: 6px; padding: 0; }
@@ -43,8 +43,18 @@
 .cm-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; }
 .cm-card h3 { font-size: 16px; }
 .cm-card p { font-size: 13px; color: #555; margin: 0; }
-.cm-cover-empty { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; margin-bottom: 4px; background: #e6f6f9; }
-.cm-card .btn { margin-top: 8px; align-self: flex-start; }
+.cm-card .btn { margin-top: auto; align-self: flex-start; } /* auto = ดันปุ่มไปชิดล่างการ์ดเสมอ */
+
+/* รูปปก: กว้างเต็มการ์ด สูงตายตัว 160px ทุกใบ / cover = ครอบรูปให้เต็มกรอบโดยไม่บิด */
+.cm-card img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 4px; display: block; }
+
+/* กลุ่มที่ไม่มีรูปปก: พื้นสีเทาอ่อน สูงเท่ารูปจริง (ไม่มีเส้นกรอบ) */
+.cm-cover-empty {
+    width: 100%; height: 160px; margin-bottom: 4px;
+    background: #f2f2f2; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: 28px;
+}
 
 /* ป้ายเล็ก (กีฬา / สถานะ) */
 .cm-tag { display: inline-block; background: #e3f4f7; color: #3a9fb0; border-radius: 20px; padding: 2px 10px; font-size: 12px; width: fit-content; }
