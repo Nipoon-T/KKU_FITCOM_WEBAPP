@@ -84,7 +84,7 @@ class ActivityController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->rules(requireCover: true));
+        $validated = $request->validate($this->rules());
 
         $activity = Activity::create([
             ...$this->activityData($request, $validated),

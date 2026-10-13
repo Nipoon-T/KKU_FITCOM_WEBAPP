@@ -288,11 +288,6 @@
             alert('กำลังย่อรูปปก กรุณารอสักครู่แล้วกดอีกครั้ง');
             return;
         }
-        if (isCreating && coverDataInput.value === '') {
-            event.preventDefault();
-            coverBox.style.borderColor = '#d9534f';
-            alert('กรุณาเลือกรูปปกกิจกรรมก่อนสร้าง');
-        }
     });
     const sportRadios = document.querySelectorAll('input[name="sport_id"]');
     const locationSelect = document.getElementById('location_id');
