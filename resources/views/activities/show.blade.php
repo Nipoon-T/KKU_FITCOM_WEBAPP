@@ -28,12 +28,7 @@
 
 @section('content')
 <div class="act-wrap">
-<<<<<<< HEAD
-    <a href="{{ route('activities.index') }}" class="back-link" onclick="if (document.referrer && new URL(document.referrer).origin === location.origin && !/\/(create|edit)\/?$/.test(new URL(document.referrer).pathname)) { history.back(); return false; }">← กลับ</a>
-=======
     <a href="{{ request('from') === 'recommendations' ? route('recommendations.index') : route('activities.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
-
->>>>>>> 8028548 (แก้กดกลับ activities)
     @if (session('success'))
         <p class="flash-ok">{{ session('success') }}</p>
     @endif
