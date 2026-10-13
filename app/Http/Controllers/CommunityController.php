@@ -128,10 +128,12 @@ class CommunityController extends Controller
 
         $community->load([
             'sport',
-            'creator',
-            'approvedMembers.user', // รายชื่อสมาชิกที่อนุมัติแล้ว
-            // กิจกรรมที่ยังไม่ถึงวัน เรียงจากใกล้ไปไกล (ตารางของคนที่ 3)
+            'creator.profile',              // ผู้สร้าง + รูปโปรไฟล์ (user_profiles.avatar)
+            'approvedMembers.user.profile', // สมาชิก + รูปโปรไฟล์
+            // กิจกรรมที่ยังไม่ถึงวัน + ประเภท/สถานที่ + นับคนที่ลงทะเบียน (ตารางของคนที่ 3)
             'activities' => fn ($query) => $query
+                ->with(['sport', 'location'])
+                ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
                 ->whereDate('date', '>=', now()->toDateString())
                 ->orderBy('date')
                 ->orderBy('start_time'),
