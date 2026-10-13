@@ -140,6 +140,7 @@
     const activityList = document.getElementById('activity-list');
 
     async function loadActivities() {
+        // เอาเฉพาะช่องที่มีค่า จะได้ URL สะอาด เช่น /activities?sport=1&date=2026-10-01
         const params = new URLSearchParams();
         new FormData(filterForm).forEach((value, key) => {
             if (value !== '') {
@@ -153,10 +154,12 @@
         const response = await fetch(url);
         const html = await response.text();
 
+        // ดึงหน้า /activities ทั้งหน้ามา แล้วสลับเฉพาะส่วนรายการ
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const newList = doc.getElementById('activity-list');
 
         if (!response.ok || !newList) {
+            // เช่น session หมดอายุแล้วโดนพาไปหน้า login ให้โหลดหน้าปกติแทน
             window.location.href = url;
             return;
         }
@@ -174,6 +177,7 @@
 
     filterForm.querySelectorAll('input').forEach((field) => {
         if (field.type === 'text') {
+            // ช่องพิมพ์ รอให้หยุดพิมพ์ครู่หนึ่งก่อนค่อยค้นหา
             field.addEventListener('input', () => {
                 clearTimeout(typingTimer);
                 typingTimer = setTimeout(loadActivities, 300);
