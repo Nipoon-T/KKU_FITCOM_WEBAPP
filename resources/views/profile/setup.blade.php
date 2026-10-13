@@ -11,6 +11,11 @@
     .pf-chip { display: inline-flex; align-items: center; gap: 6px; background: #f1f1f1; padding: 6px 14px; border-radius: 999px; font-size: 14px; cursor: pointer; }
     .pf-btn { padding: 10px 24px; background: #70c5d3; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .pf-ok { color: #2e7d32; margin-bottom: 12px; }
+    .pf-avatar { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: #e0e0e0; display: block; margin: 0 auto 10px; cursor: pointer; }
+    .pf-file { display: none; }
+    .pf-upload { display: inline-block; padding: 8px 18px; background: #fff; color: #70c5d3; border: 1px solid #70c5d3; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .pf-upload:hover { background: #70c5d3; color: #fff; }
+    .pf-hint { font-size: 12px; color: #999; margin-top: 6px; }
 </style>
 
 <div class="pf-wrap">
@@ -31,16 +36,19 @@
         @endif
 
         <div class="pf-card" style="text-align: center;">
-            @if ($user->profile && $user->profile->avatar)
-                <img id="avatarPreview" src="{{ asset('storage/'.$user->profile->avatar) }}" alt="รูปโปรไฟล์"
-                    style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; background: #e0e0e0;">
-            @else
-                <img id="avatarPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAOLi4gAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="รูปโปรไฟล์"
-                    style="width: 96px; height: 96px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; background: #e0e0e0;">
-            @endif
-            <label class="pf-label" for="avatar">รูปโปรไฟล์</label>
-            <input type="file" id="avatar" accept="image/*">
+            <label for="avatar">
+                @if ($user->profile && $user->profile->avatar)
+                    <img id="avatarPreview" class="pf-avatar" src="{{ asset('storage/'.$user->profile->avatar) }}" alt="รูปโปรไฟล์">
+                @else
+                    <img id="avatarPreview" class="pf-avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAOLi4gAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="รูปโปรไฟล์">
+                @endif
+            </label>
+
+            <label for="avatar" class="pf-upload">เปลี่ยนรูปโปรไฟล์</label>
+            <input type="file" id="avatar" class="pf-file" accept="image/*">
             <input type="hidden" name="avatar_data" id="avatar_data">
+
+            <p class="pf-hint">คลิกที่รูปหรือปุ่มเพื่อเลือกรูป</p>
             <p id="avatarError" style="color: #c62828; font-size: 13px;"></p>
             @error('avatar_data')
                 <p style="color: #c62828; font-size: 13px;">{{ $message }}</p>
