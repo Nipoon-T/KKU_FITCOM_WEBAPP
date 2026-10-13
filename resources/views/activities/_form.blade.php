@@ -1,5 +1,3 @@
-<!-- ฟอร์มกิจกรรมใช้ร่วมกับ create, edit -->
-
 @if ($errors->any())
     <ul class="err-list">
         @foreach ($errors->all() as $error)
@@ -173,7 +171,7 @@
         }
     });
 
-    // ย่อ + บีบรูปในเบราว์เซอร์ก่อนส่ง (เหมือนที่ Community ทำ) กันรูปใหญ่เกิน limit ของ PHP แล้ว failed to upload
+    // ย่อ + บีบรูปในเบราว์เซอร์ก่อนส่ง (เหมือนของหนุน) กันรูปใหญ่เกินจ้า
     const COVER_MAX_SIZE = 1600;
     const COVER_QUALITY = 0.82;
     let coverCompressing = false;
