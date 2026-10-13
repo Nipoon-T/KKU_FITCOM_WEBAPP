@@ -76,7 +76,7 @@
 
                 <h3>{{ $community->name }}</h3>
 
-                {{-- คำอธิบายย่อ ไม่เกิน 100 ตัวอักษร --}}
+                {{-- ทุกกลุ่ม (รวม private) โชว์คำอธิบายสั้นๆ ในหน้ารวม --}}
                 @if ($community->description)
                     <p>{{ \Illuminate\Support\Str::limit($community->description, 100) }}</p>
                 @endif

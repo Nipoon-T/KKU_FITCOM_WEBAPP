@@ -31,21 +31,28 @@
     {{-- ===== รายละเอียดกลุ่ม ===== --}}
     <div class="detail-card">
         <h1>{{ $community->name }}</h1>
-        <p class="desc">{{ $community->description ?: 'ไม่มีคำอธิบาย' }}</p>
+        @if ($canViewFull)
+            <p class="desc">{{ $community->description ?: 'ไม่มีคำอธิบาย' }}</p>
+        @else
+            <p class="desc muted">🔒 กลุ่มส่วนตัว ขอเข้าร่วมเพื่อดูรายละเอียดและสมาชิก</p>
+        @endif
 
         <p>🏃 <strong>ประเภทกีฬา:</strong> {{ $community->sport?->name ?? 'ไม่ระบุ' }}</p>
         <p>{{ $community->privacy === 'private' ? '🔒' : '🌐' }} <strong>ความเป็นส่วนตัว:</strong>
             {{ $community->privacy === 'private' ? 'Private (ต้องรออนุมัติ)' : 'Public (เข้าร่วมได้ทันที)' }}</p>
 
-    <div class="creator-card">
-        @include('community._avatar', ['user' => $community->creator, 'size' => 56])
-        <div>
-            <p class="creator-label">ผู้สร้าง Community</p>
-            <p class="creator-name"><strong>ชื่อ:</strong> {{ $community->creator->name }}</p>
-        </div>
-    </div>
-        <p>👥 <strong>สมาชิก:</strong> {{ $community->approvedMembers->count() }} คน</p>
-    </div>
+        {{-- ผู้สร้าง: โชว์เฉพาะคนที่มีสิทธิ์ดูรายละเอียดเต็ม --}}
+        @if ($canViewFull)
+            <div class="creator-card">
+                @include('community._avatar', ['user' => $community->creator, 'size' => 56])
+                <div>
+                    <p class="creator-label">ผู้สร้าง Community</p>
+                    <p class="creator-name"><strong>ชื่อ:</strong> {{ $community->creator->name }}</p>
+                </div>
+            </div>
+        @endif
+        {{-- ใช้เลขที่ loadCount ไว้ ไม่ต้องโหลดรายชื่อสมาชิก --}}
+        <p>👥 <strong>สมาชิก:</strong> {{ $community->approved_members_count }} คน</p>
 
     {{-- ===== กล่องสถานะ (เหมือนกล่อง "เข้าร่วมกิจกรรม") ===== --}}
     <div class="detail-card status-box">
@@ -125,8 +132,9 @@
         </div>
     @endif
 
+    @if ($canViewFull)
     {{-- ===== กิจกรรมที่กำลังจะจัด ===== --}}
-<div class="detail-card">
+    <div class="detail-card">
         <h2>กิจกรรมที่กำลังจะจัด</h2>
 
         @if ($community->activities->isEmpty())
@@ -180,6 +188,7 @@
             @endif
         </div>
     </div>
+    @endif
 
     {{-- ===== โพสต์ ===== --}}
     <div class="detail-card">
