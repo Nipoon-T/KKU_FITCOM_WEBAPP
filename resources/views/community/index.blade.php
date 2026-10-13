@@ -81,7 +81,8 @@
 
                 {{-- รูปปก: มีรูปก็แสดง ไม่มีก็แสดงกล่องสีพื้นแทน --}}
                 @if ($community->cover_image)
-                    <img src="{{ asset('storage/' . $community->cover_image) }}" alt="{{ $community->name }}" class="cm-cover">
+                    <img src="{{ asset('storage/' . $community->cover_image) }}" alt="{{ $community->name }}" class="cm-cover"
+                         style="object-position: {{ $community->cover_position ?? '50% 50%' }}">
                 @else
                     <div class="cm-cover"></div>
                 @endif
