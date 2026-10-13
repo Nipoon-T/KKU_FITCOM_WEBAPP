@@ -18,40 +18,61 @@ class Community extends Model
         'created_by',
     ];
 
+    /**
+     * @return BelongsTo<Sport, $this>
+     */
     public function sport(): BelongsTo
     {
         return $this->belongsTo(Sport::class);
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * @return HasMany<Activity, $this>
+     */
     public function activities(): HasMany
     {
         return $this->hasMany(Activity::class);
     }
 
+    /**
+     * @return HasMany<CommunityMember, $this>
+     */
     public function members(): HasMany
     {
         return $this->hasMany(CommunityMember::class);
     }
 
+    /**
+     * @return HasMany<CommunityPost, $this>
+     */
     public function posts(): HasMany
     {
         return $this->hasMany(CommunityPost::class);
     }
 
-    // ===== เพิ่มใหม่ =====
-
     // สมาชิกที่อนุมัติแล้ว
+
+    /**
+     * @return HasMany<CommunityMember, $this>
+     */
     public function approvedMembers(): HasMany
     {
         return $this->hasMany(CommunityMember::class)->where('status', 'approved');
     }
 
     // คำขอที่รออนุมัติ
+
+    /**
+     * @return HasMany<CommunityMember, $this>
+     */
     public function pendingMembers(): HasMany
     {
         return $this->hasMany(CommunityMember::class)->where('status', 'pending');

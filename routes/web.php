@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
 
     // owner: แก้ไข / ลบกลุ่ม
     Route::get('/communities/{community}/edit', [CommunityController::class, 'edit'])->name('community.edit');
+    Route::get('/communities/{community}/manage', [CommunityController::class, 'manage'])->name('community.manage'); // dashboard ของกลุ่ม (owner)
     Route::put('/communities/{community}', [CommunityController::class, 'update'])->name('community.update');
     Route::delete('/communities/{community}', [CommunityController::class, 'destroy'])->name('community.destroy');
 

@@ -116,3 +116,20 @@
 .detail-card .cm-card { box-shadow: 0 2px 8px rgba(0,0,0,.10); }
 .detail-card .cm-card p { margin: 1px 0; font-size: 13px; color: #555; }
 .cm-card .btn.center { align-self: center; padding: 8px 32px; border-radius: 20px; } /* ปุ่มกลางการ์ด มุมโค้งแบบในภาพ */
+
+/* ===== หน้าจัดการกลุ่ม (dashboard) ===== */
+.stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; text-align: center; }
+.stat-label { font-size: 14px; color: #3a9fb0; font-weight: bold; margin: 0; }
+.stat-number { font-size: 40px; font-weight: bold; color: #222; margin: 6px 0 0; line-height: 1.1; }
+.stat-sub { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; font-size: 13px; color: #555; margin-top: 8px; }
+.stat-card .cm-tag { margin-top: 10px; text-decoration: none; }
+
+/* แถวอันดับคะแนน */
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; }
+.rank-row:last-of-type { border-bottom: none; }
+.rank-no { width: 28px; height: 28px; border-radius: 50%; background: #f2f2f2; color: #777; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; flex-shrink: 0; }
+.rank-1 { background: #ffd54f; color: #7a5b00; }  /* ทอง */
+.rank-2 { background: #e0e0e0; color: #555; }     /* เงิน */
+.rank-3 { background: #ffcc80; color: #8d4b00; }  /* ทองแดง */
+.rank-name { flex: 1; font-size: 14px; }
+.rank-points { font-weight: bold; color: #3a9fb0; font-size: 14px; }
