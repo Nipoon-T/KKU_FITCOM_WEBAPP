@@ -103,8 +103,9 @@ class ActivityController extends Controller
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
         $myParticipation = $activity->participants()->where('user_id', auth()->id())->first();
         $levels = self::LEVELS;
+        $membersOnly = $this->isLockedForUser($activity);
 
-        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels'));
+        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels', 'membersOnly'));
     }
 
     public function edit(Activity $activity): View
@@ -175,6 +176,10 @@ class ActivityController extends Controller
     {
         $userId = auth()->id();
 
+        if ($this->isLockedForUser($activity)) {
+            return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
+        }
+
         $existing = $activity->participants()->where('user_id', $userId)->first();
 
         if ($existing?->status === 'registered') {
@@ -183,10 +188,6 @@ class ActivityController extends Controller
 
         if ($this->hasEnded($activity)) {
             return $this->registerResult($request, 'กิจกรรมนี้จบไปแล้ว', false);
-        }
-
-        if (! $this->canJoin($activity)) {
-            return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
         }
 
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
@@ -340,7 +341,6 @@ class ActivityController extends Controller
         ];
     }
 
-    // รับรูปปกที่ JS ย่อแล้วเป็น base64 (วิธีเดียวกับ Community) คืน path หรือ null ถ้าไม่ผ่าน
     private function saveCoverImage(string $data): ?string
     {
         $prefix = 'data:image/jpeg;base64,';
@@ -370,20 +370,20 @@ class ActivityController extends Controller
         abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
     }
 
-    private function hasEnded(Activity $activity): bool
-    {
-        return Carbon::parse($activity->date)->isBefore(today());
-    }
-
-    private function canJoin(Activity $activity): bool
+    private function isLockedForUser(Activity $activity): bool
     {
         $community = $activity->community;
 
-        if (! $community || $community->privacy !== 'private') {
-            return true;
+        if ($community === null || $community->privacy !== 'private') {
+            return false;
         }
 
-        return $community->isApprovedMember(auth()->user());
+        return ! $community->isApprovedMember(auth()->user());
+    }
+
+    private function hasEnded(Activity $activity): bool
+    {
+        return Carbon::parse($activity->date)->isBefore(today());
     }
 
     private function isActivityDay(Activity $activity): bool

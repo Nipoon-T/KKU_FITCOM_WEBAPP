@@ -74,13 +74,9 @@
             <p>กิจกรรมนี้จบไปแล้ว</p>
         @elseif ($registeredCount >= $activity->max_participants)
             <p>กิจกรรมเต็มแล้ว</p>
-        @elseif (! $canJoin)
-            <p>🔒 กลุ่มไพรเวท ต้องเป็นสมาชิกก่อน</p>
-            <a href="{{ route('community.show', $activity->community) }}" class="btn" style="margin-top: 8px;">
-                ไปหน้ากลุ่มเพื่อขอเข้าร่วม
-            </a>
         @else
             @guest
+                {{-- ยังไม่ login: กดแล้วแค่แสดงข้อความ ไม่ส่งคำขอ --}}
                 <button type="button" class="btn"
                         onclick="document.getElementById('loginNotice').style.display = 'block'">
                     เข้าร่วมกิจกรรม
@@ -89,6 +85,10 @@
                    style="display: none; margin-top: 8px; color: #d9534f; font-weight: normal;">
                     กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
                 </p>
+            @elseif ($membersOnly)
+                {{-- กลุ่มไพรเวท + ยังไม่ใช่สมาชิก: ไม่แสดงปุ่มเข้าร่วม --}}
+                <p>🔒 กลุ่มไพรเวท ต้องเป็นสมาชิกก่อน</p>
+                <a href="{{ route('community.show', $activity->community) }}" class="btn outline">ไปหน้ากลุ่มเพื่อขอเข้าร่วม</a>
             @else
                 <form action="{{ route('activities.register', $activity) }}" method="POST" id="register-form">
                     @csrf
