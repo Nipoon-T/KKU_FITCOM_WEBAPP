@@ -20,13 +20,13 @@
     @endif
 
     {{-- ===== ส่วนที่ 1: กลุ่มที่ฉันเป็นเจ้าของ ===== --}}
-    <h2 class="sec-title">กลุ่มที่ฉันเป็นเจ้าของ ({{ $ownedCommunities->count() }})</h2>
+    <h2 class="sec-title">กลุ่มที่ฉันสร้าง ({{ $ownedCommunities->count() }})</h2>
 
     @forelse ($ownedCommunities as $community)
         <div class="row-card">
             <div class="name">
-                <a href="{{ route('community.show', $community) }}">{{ $community->name }} →</a>
-                <span class="sub">👥 {{ $community->approved_members_count }} คน</span>
+                <a href="{{ route('community.show', $community) }}">{{ $community->name }} </a>
+                <span class="sub">  {{ $community->approved_members_count }} คน</span>
             </div>
 
             <div class="actions">
@@ -48,8 +48,8 @@
     @forelse ($memberships as $membership)
         <div class="row-card">
             <div class="name">
-                <a href="{{ route('community.show', $membership->community) }}">{{ $membership->community->name }} →</a>
-                <span class="sub">{{ $membership->community->sport?->name ?? 'ไม่ระบุกีฬา' }}</span>
+                <a href="{{ route('community.show', $membership->community) }}" {{ $membership->community->name }} →</a>
+                <span class="sub">สมาชิก {{ $membership->community->approved_members_count }} คน</span>
             </div>
 
             <div class="actions">
