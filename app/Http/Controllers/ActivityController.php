@@ -69,7 +69,7 @@ class ActivityController extends Controller
         if ($request->filled('to')) {
             $query->where('end_time', '<=', $request->input('to'));
         }
-        
+
         $user = auth()->user();
 
         $query->where(function ($q) use ($user) {
