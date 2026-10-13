@@ -22,8 +22,9 @@ class MatchingService
         $mySportIds = $user->sports->pluck('id')->toArray();
         $weights = MatchWeight::pluck('weight_value', 'factor_name');
 
-        // ซ่อนเฉพาะกิจกรรมที่ user ยังลงทะเบียนอยู่ (ยกเลิกแล้วยังเห็น)
+        // ซ่อนเฉพาะกิจกรรมที่ user ยังลงทะเบียนอยู่ ซึ่งยกเลิกแล้วยังเห็น
         $activities = Activity::with(['sport', 'location'])
+            ->whereDate('date', '>=', today())   // เอาเฉพาะกิจกรรมที่ยังไม่ถึงวัน วันนี้ยังนับอยู่
             ->whereDoesntHave('participants', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('status', 'registered');
             })
@@ -37,14 +38,14 @@ class MatchingService
             $score += $this->timeScore($activity, $user) * $weights['time_overlap'];
             $score += $this->locationScore($activity, $profile) * $weights['location_match'];
 
-            // แปลงเป็นเปอร์เซ็นต์ (0-100) แล้วแปะไว้ที่กิจกรรม
+            // แปลงเป็นเปอร์เซ็นต์ 0-100 แล้วแปะไว้ที่กิจกรรม
             $activity->setAttribute('match_score', round($score * 100));
         }
 
         return $activities->sortByDesc('match_score')->values();
     }
 
-    // 1) กีฬาตรงกับที่ user สนใจไหม (ตรง = 1, ไม่ตรง = 0)
+    // 1) กีฬาตรงกับที่ user สนใจไหม ตรง = 1, ไม่ตรง = 0
     /**
      * @param  array<int, mixed>  $mySportIds
      */
@@ -57,7 +58,7 @@ class MatchingService
         return 0;
     }
 
-    // 2) เป้าหมาย: goal เป็นข้อความที่ user พิมพ์เอง เลยเช็คว่ามีคำนี้อยู่ไหม
+    // 2) เป้าหมาย goal เป็นข้อความที่ user พิมพ์เอง เลยเช็คว่ามีคำนี้อยู่ไหม
     private function goalScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->goal) {
@@ -80,7 +81,7 @@ class MatchingService
         return 0.5;
     }
 
-    // 3) ระดับ: skill_level ของ user เป็นข้อความ แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
+    // 3) ระดับ skill_level ของ user เป็นข้อความ แต่ของกิจกรรมเป็นเลข 1-3 เลยต้องแปลงก่อน
     private function skillScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->skill_level) {
@@ -113,7 +114,7 @@ class MatchingService
         return 0;
     }
 
-    // 4) เวลา: เช็คว่าเวลาเริ่มกิจกรรมอยู่ในช่วงว่างของ user ไหม (ไม่มีข้อมูลเลย = 0.5)
+    // 4) เวลา เช็คว่าเวลาเริ่มกิจกรรมอยู่ในช่วงว่างของ user ไหม ถ้าไม่มีข้อมูลเลย = 0.5
     private function timeScore(Activity $activity, User $user): float
     {
         $slots = UserAvailability::where('user_id', $user->id)->get();
@@ -122,7 +123,7 @@ class MatchingService
             return 0.5;
         }
 
-        // วันในสัปดาห์ของกิจกรรม (0 = อาทิตย์ เหมือนที่เก็บใน day_of_week)
+        // วันในสัปดาห์ของกิจกรรม 0 = อาทิตย์ เหมือนที่เก็บใน day_of_week
         $day = Carbon::parse($activity->date)->dayOfWeek;
         // เอาแค่ HH:MM จาก start_time
         $start = substr((string) $activity->start_time, 0, 5);
@@ -143,7 +144,7 @@ class MatchingService
         return 0;
     }
 
-    // 5) สถานที่: ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location ไหม
+    // 5) สถานที่ ชื่อ/ที่อยู่สถานที่จัดกิจกรรม มีคำที่ user กรอกใน preferred_location มั้ย
     private function locationScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->preferred_location || ! $activity->location) {

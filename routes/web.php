@@ -63,7 +63,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/activities/{activity}/register', [ActivityController::class, 'register'])->name('activities.register');
     Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
-    Route::get('/recommendations', [MatchingController::class, 'index'])->name('recommendations');
+    Route::get('/recommendations', [MatchingController::class, 'index'])->name('recommendations.index');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
