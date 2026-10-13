@@ -14,6 +14,9 @@
     // รูปที่จะแสดงในกล่องรูปปก: รูปที่เพิ่งเลือก (ตอนฟอร์มไม่ผ่าน) > รูปเดิมของกลุ่ม > ไม่มี
     $coverSrc = old('cover_image_data')
         ?: ($community?->cover_image ? asset('storage/'.$community->cover_image) : null);
+
+    // ตำแหน่งรูป: ค่าที่เพิ่งลาก > ค่าเดิมของกลุ่ม > กึ่งกลาง
+    $coverPos = old('cover_position', $community?->cover_position ?? '50% 50%');
 @endphp
 
 <form action="{{ $action }}" method="POST">
@@ -42,30 +45,33 @@
             <span class="counter"><span id="description-count">0</span>/500</span>
         </div>
 
-        <div class="field">
+                <div class="field">
             <label>รูปปกกลุ่ม</label>
 
-            {{-- กล่องเส้นประ: คลิกที่ไหนก็ได้เพื่อเลือกรูป --}}
+            {{-- กล่องเส้นประ: ยังไม่มีรูป = คลิกเพื่อเลือก / มีรูปแล้ว = ลากเพื่อปรับตำแหน่ง --}}
             <div class="cover-box" id="coverBox">
-                {{-- ข้อความตอนยังไม่มีรูป --}}
                 <span id="coverPlaceholder" style="{{ $coverSrc ? 'display:none' : '' }}">⬆️<br>คลิกเพื่ออัปโหลดรูปภาพ</span>
 
-                {{-- รูป preview --}}
+                {{-- รูป preview: object-position = ตำแหน่งที่ลากไว้ --}}
                 <img id="coverPreview" alt="รูปปก"
-                    @if ($coverSrc) src="{{ $coverSrc }}" @else style="display:none" @endif>
+                    @if ($coverSrc) src="{{ $coverSrc }}" style="object-position: {{ $coverPos }}" @else style="display:none" @endif>
 
-                {{-- ปุ่มเปลี่ยนรูป (แสดงเมื่อมีรูปแล้ว) --}}
+                {{-- ป้ายบอกวิธีใช้ (แสดงเมื่อมีรูป) --}}
+                <span class="cover-hint" id="coverHint" style="{{ $coverSrc ? '' : 'display:none' }}">ลากรูปเพื่อปรับตำแหน่ง</span>
+
                 <button type="button" id="coverPickBtn" class="cover-change-btn"
                     style="{{ $coverSrc ? '' : 'display:none' }}">🖼️ เปลี่ยนรูป</button>
             </div>
 
-            {{-- ช่องเลือกไฟล์ถูกซ่อน และไม่มี name = ไฟล์จริงไม่ถูกส่ง (JS ย่อรูปแล้วใส่ hidden ด้านล่างแทน) --}}
+            {{-- ช่องเลือกไฟล์ (ซ่อน ไม่มี name) + รูปที่บีบแล้ว + ตำแหน่งรูป --}}
             <input type="file" id="cover_image" accept="image/*" style="display:none">
             <input type="hidden" id="cover_image_data" name="cover_image_data" value="{{ old('cover_image_data') }}">
+            <input type="hidden" id="cover_position" name="cover_position" value="{{ $coverPos }}">
 
             <p class="hint">ระบบจะย่อรูปให้อัตโนมัติ</p>
             <p id="coverError" class="field-err"></p>
             @error('cover_image') <p class="field-err">{{ $message }}</p> @enderror
+            @error('cover_position') <p class="field-err">{{ $message }}</p> @enderror
         </div>
     </div>
 

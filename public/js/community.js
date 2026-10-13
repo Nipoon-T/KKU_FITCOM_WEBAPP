@@ -73,42 +73,52 @@ document.querySelectorAll('[data-counter]').forEach(function (field) {
 });
 
 
-// ===== รูปปก: คลิกกล่องเพื่อเลือกรูป แล้วย่อ + บีบอัดก่อนส่ง =====
+// ===== รูปปก: คลิกเพื่อเลือกรูป / ลากเพื่อปรับตำแหน่ง / ย่อ+บีบอัดก่อนส่ง =====
 const coverBox = document.getElementById('coverBox');                 // กล่องเส้นประ
 const coverInput = document.getElementById('cover_image');            // ช่องเลือกไฟล์ (ซ่อน)
-const coverData = document.getElementById('cover_image_data');        // hidden เก็บรูปที่บีบแล้ว
+const coverData = document.getElementById('cover_image_data');        // hidden: รูปที่บีบแล้ว
+const coverPosition = document.getElementById('cover_position');      // hidden: ตำแหน่งรูป เช่น "50% 30%"
 const coverPreview = document.getElementById('coverPreview');         // รูป preview
 const coverPlaceholder = document.getElementById('coverPlaceholder'); // ข้อความ "คลิกเพื่ออัปโหลด"
+const coverHint = document.getElementById('coverHint');               // ป้าย "ลากรูปเพื่อปรับตำแหน่ง"
 const coverPickBtn = document.getElementById('coverPickBtn');         // ปุ่ม "เปลี่ยนรูป"
 const coverError = document.getElementById('coverError');             // ข้อความ error
 
 const MAX_SIZE = 1200;  // ด้านที่ยาวที่สุดไม่เกิน 1200px
 const QUALITY = 0.8;    // คุณภาพ JPEG (0–1)
 
-// ทำงานเฉพาะหน้าที่มีกล่องรูปปก (create / edit)
 if (coverBox && coverInput && coverData) {
 
-    // คลิกที่กล่อง → เปิดหน้าต่างเลือกไฟล์
+    // มีรูปอยู่แล้วตั้งแต่เปิดหน้าไหม (หน้า edit หรือฟอร์มเด้งกลับ) → ดูจากว่ารูปถูกซ่อนหรือเปล่า
+    let hasCover = coverPreview.style.display !== 'none';
+
+    // ----- เลือกรูป -----
+
+    // คลิกกล่อง: ยังไม่มีรูป → เปิดหน้าต่างเลือกไฟล์ / มีรูปแล้ว → ไม่ทำอะไร (ใช้ลากแทน)
     coverBox.addEventListener('click', function () {
-        coverInput.click();
+        if (!hasCover) {
+            coverInput.click();
+        }
     });
 
-    // คลิกปุ่ม "เปลี่ยนรูป" → เปิดหน้าต่างเลือกไฟล์
+    // ปุ่ม "เปลี่ยนรูป"
     coverPickBtn.addEventListener('click', function (e) {
-        e.stopPropagation(); // กันไม่ให้ไปเรียก click ของกล่องซ้ำ (หน้าต่างจะเปิด 2 รอบ)
+        e.stopPropagation(); // กันไม่ให้ไปเรียก click ของกล่องซ้ำ
         coverInput.click();
     });
+    coverPickBtn.addEventListener('mousedown', function (e) {
+        e.stopPropagation(); // กดปุ่มแล้วไม่ต้องเริ่มลากรูป
+    });
 
-    // เมื่อเลือกไฟล์แล้ว
+    // เลือกไฟล์แล้ว → ย่อ + บีบอัด
     coverInput.addEventListener('change', function () {
         const file = coverInput.files[0];
-        coverError.textContent = ''; // ล้าง error เก่า
+        coverError.textContent = '';
 
         if (!file) {
             return; // กดยกเลิก → ใช้รูปเดิมต่อ
         }
 
-        // ไม่ใช่ไฟล์รูป → แจ้งเตือน
         if (!file.type.startsWith('image/')) {
             coverError.textContent = 'กรุณาเลือกไฟล์รูปภาพ';
             coverInput.value = '';
@@ -117,13 +127,11 @@ if (coverBox && coverInput && coverData) {
 
         const reader = new FileReader();
 
-        // 1) อ่านไฟล์เสร็จ → โหลดเป็นรูป
         reader.onload = function (e) {
             const img = new Image();
 
-            // 2) โหลดรูปเสร็จ → ย่อด้วย canvas
             img.onload = function () {
-                // อัตราย่อ: รูปเล็กกว่า 1200px อยู่แล้ว = ไม่ย่อ (scale = 1)
+                // ย่อรูปด้วย canvas (รูปเล็กกว่า 1200px อยู่แล้ว = ไม่ย่อ)
                 const scale = Math.min(1, MAX_SIZE / img.width, MAX_SIZE / img.height);
                 const width = Math.round(img.width * scale);
                 const height = Math.round(img.height * scale);
@@ -133,19 +141,26 @@ if (coverBox && coverInput && coverData) {
                 canvas.height = height;
 
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';               // พื้นขาว (PNG พื้นใสจะไม่เป็นสีดำ)
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, width, height);
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // 3) แปลงเป็น JPEG แบบบีบอัด → ข้อความ Base64
                 const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
 
-                // 4) ใส่ค่าส่งไปกับฟอร์ม + อัปเดตหน้าตากล่อง
+                // ใส่ค่าส่งไปกับฟอร์ม
                 coverData.value = dataUrl;
+
+                // รูปใหม่ → เริ่มที่กึ่งกลาง
+                coverPosition.value = '50% 50%';
+                coverPreview.style.objectPosition = '50% 50%';
+
+                // อัปเดตหน้าตากล่อง
                 coverPreview.src = dataUrl;
-                coverPreview.style.display = 'block';    // แสดงรูป
-                coverPlaceholder.style.display = 'none'; // ซ่อนข้อความ "คลิกเพื่ออัปโหลด"
-                coverPickBtn.style.display = 'block';    // แสดงปุ่ม "เปลี่ยนรูป"
+                coverPreview.style.display = 'block';
+                coverPlaceholder.style.display = 'none';
+                coverHint.style.display = 'block';
+                coverPickBtn.style.display = 'block';
+                hasCover = true;
             };
 
             img.src = e.target.result;
@@ -153,4 +168,62 @@ if (coverBox && coverInput && coverData) {
 
         reader.readAsDataURL(file);
     });
+
+    // ----- ลากเพื่อปรับตำแหน่ง -----
+
+    // แปลงข้อความ "50% 30%" → { x: 50, y: 30 }
+    function parsePosition(value) {
+        const parts = value.split(' ');
+        const x = parseFloat(parts[0]);
+        const y = parseFloat(parts[1]);
+        return { x: isNaN(x) ? 50 : x, y: isNaN(y) ? 50 : y };
+    }
+
+    let dragging = false;              // กำลังลากอยู่ไหม
+    let startPos = { x: 50, y: 50 };   // ตำแหน่งรูปตอนเริ่มลาก (%)
+    let startPoint = { x: 0, y: 0 };   // ตำแหน่งเมาส์/นิ้วตอนเริ่มลาก (px)
+
+    // เริ่มลาก
+    function startDrag(clientX, clientY) {
+        if (!hasCover) return; // ยังไม่มีรูป ไม่ต้องลาก
+        dragging = true;
+        startPos = parsePosition(coverPosition.value);
+        startPoint = { x: clientX, y: clientY };
+    }
+
+    // ระหว่างลาก: คำนวณระยะที่เลื่อน แล้วแปลงเป็น % ของกล่อง
+    function moveDrag(clientX, clientY) {
+        if (!dragging) return;
+
+        const rect = coverBox.getBoundingClientRect();
+        const deltaX = ((clientX - startPoint.x) / rect.width) * 100;
+        const deltaY = ((clientY - startPoint.y) / rect.height) * 100;
+
+        // ลากขวา = เห็นส่วนซ้ายของรูปมากขึ้น จึงใช้ "ลบ" / จำกัดค่าไว้ที่ 0–100
+        const x = Math.round(Math.min(100, Math.max(0, startPos.x - deltaX)));
+        const y = Math.round(Math.min(100, Math.max(0, startPos.y - deltaY)));
+
+        coverPreview.style.objectPosition = x + '% ' + y + '%'; // เลื่อนรูปทันที
+        coverPosition.value = x + '% ' + y + '%';                // เก็บค่าไว้ส่งไปกับฟอร์ม
+    }
+
+    // ปล่อยเมาส์/นิ้ว
+    function endDrag() {
+        dragging = false;
+    }
+
+    // เมาส์
+    coverBox.addEventListener('mousedown', function (e) { startDrag(e.clientX, e.clientY); });
+    window.addEventListener('mousemove', function (e) { moveDrag(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', endDrag);
+
+    // นิ้ว (มือถือ)
+    coverBox.addEventListener('touchstart', function (e) {
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    coverBox.addEventListener('touchmove', function (e) {
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+        if (dragging) e.preventDefault(); // กันไม่ให้หน้าเว็บเลื่อนตามตอนลากรูป
+    }, { passive: false });
+    coverBox.addEventListener('touchend', endDrag);
 }

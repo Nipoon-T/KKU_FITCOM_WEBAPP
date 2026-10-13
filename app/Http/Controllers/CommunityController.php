@@ -82,12 +82,15 @@ class CommunityController extends Controller
             'description' => ['nullable', 'string'],
             'sport_id' => ['nullable', 'exists:sports,id'],
             'cover_image_data' => ['nullable', 'string'], // รูปที่บีบแล้ว (ข้อความ Base64 จาก JS)
+            'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'], // ต้องเป็นรูปแบบ "50% 30%"
             'privacy' => ['required', 'in:public,private'],
         ]);
 
         $validated['created_by'] = auth()->id(); // คนที่ล็อกอินอยู่คือผู้สร้าง
 
         unset($validated['cover_image_data']); // ไม่ใช่คอลัมน์ในตาราง เอาออกก่อนบันทึก
+        // ถ้าไม่ได้ส่งตำแหน่งมา ใช้กึ่งกลาง (คอลัมน์ห้ามเป็น null)
+        $validated['cover_position'] = $validated['cover_position'] ?? '50% 50%';
 
         // ถ้ามีรูปปก → ตรวจและบันทึกด้วยฟังก์ชัน saveCoverImage (อยู่ท้ายไฟล์)
         if ($request->filled('cover_image_data')) {
@@ -281,10 +284,14 @@ class CommunityController extends Controller
             'description' => ['nullable', 'string'],
             'sport_id' => ['nullable', 'exists:sports,id'],
             'cover_image_data' => ['nullable', 'string'],
+            'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'], // ต้องเป็นรูปแบบ "50% 30%"
             'privacy' => ['required', 'in:public,private'],
         ]);
 
         unset($validated['cover_image_data']);
+
+        // ถ้าไม่ได้ส่งตำแหน่งมา ใช้กึ่งกลาง (คอลัมน์ห้ามเป็น null)
+        $validated['cover_position'] = $validated['cover_position'] ?? '50% 50%';
 
         // ถ้าเลือกรูปใหม่ → บันทึกรูปใหม่ก่อน ถ้าสำเร็จค่อยลบรูปเก่า
         if ($request->filled('cover_image_data')) {
