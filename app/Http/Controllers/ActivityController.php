@@ -69,6 +69,17 @@ class ActivityController extends Controller
         if ($request->filled('to')) {
             $query->where('end_time', '<=', $request->input('to'));
         }
+        
+        $user = auth()->user();
+
+        $query->where(function ($q) use ($user) {
+            $q->whereNull('community_id')
+                ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'));
+
+            if ($user) {
+                $q->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            }
+        });
 
         $activities = $query->orderBy('date')->orderBy('start_time')->get();
         $sports = Sport::orderBy('name')->get();
