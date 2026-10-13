@@ -43,7 +43,8 @@
     <div class="cm-card">
         {{-- รูปปก (ถ้ามี) --}}
         @if ($community->cover_image)
-            <img src="{{ asset('storage/' . $community->cover_image) }}" alt="{{ $community->name }}" class="cm-cover">
+            <img src="{{ asset('storage/' . $community->cover_image) }}" alt="{{ $community->name }}" class="cm-cover"
+                 style="object-position: {{ $community->cover_position ?? '50% 50%' }}">
         @endif
 
         <h1>{{ $community->name }}</h1>
