@@ -32,7 +32,14 @@
         <p>🏃 <strong>ประเภทกีฬา:</strong> {{ $community->sport?->name ?? 'ไม่ระบุ' }}</p>
         <p>{{ $community->privacy === 'private' ? '🔒' : '🌐' }} <strong>ความเป็นส่วนตัว:</strong>
             {{ $community->privacy === 'private' ? 'Private (ต้องรออนุมัติ)' : 'Public (เข้าร่วมได้ทันที)' }}</p>
-        <p>🙋 <strong>ผู้สร้างกลุ่ม:</strong> {{ $community->creator->name }}</p>
+
+    <div class="creator-card">
+        @include('community._avatar', ['user' => $community->creator, 'size' => 56])
+        <div>
+            <p class="creator-label">ผู้สร้าง Community</p>
+            <p class="creator-name"><strong>ชื่อ:</strong> {{ $community->creator->name }}</p>
+        </div>
+    </div>
         <p>👥 <strong>สมาชิก:</strong> {{ $community->approvedMembers->count() }} คน</p>
     </div>
 
@@ -104,29 +111,59 @@
     @endif
 
     {{-- ===== กิจกรรมที่กำลังจะจัด ===== --}}
-    <div class="detail-card">
+<div class="detail-card">
         <h2>กิจกรรมที่กำลังจะจัด</h2>
 
-        @forelse ($community->activities as $activity)
-            <div class="list-row">
-                <a href="{{ route('activities.show', $activity) }}">{{ $activity->name }} →</a>
-                <span class="muted">📅 {{ $activity->date->format('d/m/Y') }} {{ substr($activity->start_time, 0, 5) }} น.</span>
-            </div>
-        @empty
+        @if ($community->activities->isEmpty())
             <p class="muted">ยังไม่มีกิจกรรม</p>
-        @endforelse
+        @else
+            <div class="cm-grid">
+                @foreach ($community->activities as $activity)
+                    <div class="cm-card">
+                        {{-- รูปกิจกรรม (ไม่มีรูป = กรอบเปล่า ขนาดเท่ากัน) --}}
+                        @if ($activity->cover_image)
+                            <img src="{{ asset('storage/'.$activity->cover_image) }}" alt="{{ $activity->name }}"
+                                style="object-position: {{ $activity->cover_position ?? '50% 50%' }};">
+                        @else
+                            <div class="cm-cover-empty">🏃</div>
+                        @endif
+
+                        <h3>{{ $activity->name }}</h3>
+
+                        <p><strong>ประเภทกิจกรรม:</strong> {{ $activity->sport?->name ?? '-' }}</p>
+                        {{-- วันที่ภาษาไทย เช่น "5 กันยายน พ.ศ. 2569" (ปี ค.ศ. + 543 = พ.ศ.) --}}
+                        <p><strong>วัน/เดือน/ปี:</strong>
+                            {{ $activity->date->locale('th')->translatedFormat('j F') }} พ.ศ. {{ $activity->date->year + 543 }}</p>
+                        <p><strong>เวลา:</strong> {{ substr($activity->start_time, 0, 5) }} น.</p>
+                        <p><strong>สถานที่:</strong> {{ $activity->location?->name ?? '-' }}</p>
+                        <p><strong>จำนวนคน:</strong> {{ $activity->registered_count }}/{{ $activity->max_participants }}</p>
+
+                        {{-- ไปหน้ากิจกรรม (การเข้าร่วมจริงทำในหน้านั้น ของคนที่ 3) --}}
+                        <a href="{{ route('activities.show', $activity) }}" class="btn center">เข้าร่วม</a>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     {{-- ===== สมาชิก ===== --}}
+    @php
+        $members = $community->approvedMembers;
+        $showLimit = 8;
+    @endphp
     <div class="detail-card">
-        <h2>สมาชิก ({{ $community->approvedMembers->count() }})</h2>
+        <h2>สมาชิก ({{ $members->count() }})</h2>
 
-        @foreach ($community->approvedMembers as $member)
-            <div class="list-row">
-                <span>{{ $member->user->name }}</span>
-                <span class="cm-tag">{{ $member->role === 'owner' ? 'เจ้าของ' : 'สมาชิก' }}</span>
-            </div>
-        @endforeach
+        <div class="member-avatars">
+            @foreach ($members->take($showLimit) as $member)
+                @include('community._avatar', ['user' => $member->user, 'size' => 44])
+            @endforeach
+
+            {{-- เกิน 8 คน → วงกลมสีเทา "+จำนวนที่เหลือ" --}}
+            @if ($members->count() > $showLimit)
+                <span class="avatar avatar-more" style="width: 44px; height: 44px;">+{{ $members->count() - $showLimit }}</span>
+            @endif
+        </div>
     </div>
 
     {{-- ===== โพสต์ ===== --}}

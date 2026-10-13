@@ -69,6 +69,9 @@
                 @if ($community->cover_image)
                     <img src="{{ asset('storage/'.$community->cover_image) }}" alt="{{ $community->name }}"
                         style="object-position: {{ $community->cover_position ?? '50% 50%' }};">
+                @else
+                    {{-- ไม่มีรูปปก → แสดงกรอบเปล่าขนาดเท่ากัน --}}
+                    <div class="cm-cover-empty"> </div>
                 @endif
 
                 <h3>{{ $community->name }}</h3>
