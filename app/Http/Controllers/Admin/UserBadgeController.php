@@ -11,7 +11,6 @@ use Illuminate\View\View;
 
 class UserBadgeController extends Controller
 {
-    // หน้าจัดการเหรียญของผู้ใช้ 1 คน
     public function show(User $user): View
     {
         $badges = Badge::orderBy('condition_type')->orderBy('condition_value')->get();
@@ -22,7 +21,7 @@ class UserBadgeController extends Controller
         return view('admin.users.show', compact('user', 'badges', 'earned'));
     }
 
-    // มอบเหรียญ
+    // มอบเหรียญให้ผู้ใช้
     public function store(User $user, Badge $badge): JsonResponse
     {
         $exists = UserBadge::where('user_id', $user->id)->where('badge_id', $badge->id)->exists();

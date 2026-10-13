@@ -24,7 +24,7 @@ class DemoGamificationSeeder extends Seeder
         $location = Location::create(['name' => 'สนามกีฬา มข. (demo)']);
         $host = User::factory()->create(['name' => 'Demo Host', 'email' => 'host@demo.test']);
 
-        // days = เข้าร่วมเมื่อกี่วันก่อน (0 = วันนี้)
+        // days คือเข้าร่วมเมื่อกี่วันก่อน (0 คือวันนี้)
         $plans = [
             ['name' => 'น้องขยัน', 'email' => 'active@demo.test', 'days' => [20, 18, 15, 12, 10, 6, 5, 4, 3, 2, 1, 0]],
             ['name' => 'สายชิล', 'email' => 'casual@demo.test', 'days' => [13, 9, 8, 2]],
@@ -39,12 +39,12 @@ class DemoGamificationSeeder extends Seeder
             $user = User::factory()->create(['name' => $plan['name'], 'email' => $plan['email']]);
 
             $days = $plan['days'];
-            rsort($days); // เรียงจากเก่าสุดไปใหม่สุด streak จะนับถูก
+            rsort($days); // เรียงจากเก่าสุดไปใหม่สุด streak จะได้นับถูก
 
             foreach ($days as $daysAgo) {
                 $date = now()->subDays($daysAgo);
 
-                // กิจกรรมวันเดียวกันใช้ร่วมกัน ไม่สร้างซ้ำ
+                // กิจกรรมวันเดียวกันใช้ร่วมกัน จะไม่สร้างซ้ำ
                 $activities[$daysAgo] ??= Activity::create([
                     'name' => 'วิ่งเช้า demo '.$date->format('d/m'),
                     'sport_id' => $sport->id,
@@ -61,7 +61,7 @@ class DemoGamificationSeeder extends Seeder
                     'user_id' => $user->id,
                 ]);
 
-                // บรรทัดนี้จะทำให้ observer ทำงาน → ได้แต้ม/streak/เหรียญ
+                // observer จะทำงาน → ได้แต้ม/streak/เหรียญ
                 Attendance::create([
                     'activity_participant_id' => $participant->id,
                     'checked_in_at' => $date->setTime(18, 0),

@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $totalPoints = $user->totalPoints();
         $streak = $user->streak;
 
-        // ถ้าไม่ได้เข้าร่วมตั้งแต่เมื่อวาน ถือว่า streak ขาดแล้ว แสดงเป็น 0
+        // ถ้าไม่ได้เข้าร่วมตั้งแต่เมื่อวานก้คือ streak ขาดแล้ว จะเป็น 0
         $currentStreak = 0;
         if ($streak?->last_activity_date !== null
             && $streak->last_activity_date->greaterThanOrEqualTo(now()->subDay()->startOfDay())) {
@@ -54,7 +54,7 @@ class DashboardController extends Controller
             $chartData[] = (int) ($daily[$day->format('Y-m-d')] ?? 0);
         }
 
-        // กิจกรรมที่สมัครไว้ (ข้อมูลจากโมดูล Activity ของคนที่ 3)
+        // กิจกรรมที่เราสมัครไว้
         $today = now()->toDateString();
         $myActivities = fn () => ActivityParticipant::query()
             ->select('activity_participants.*')

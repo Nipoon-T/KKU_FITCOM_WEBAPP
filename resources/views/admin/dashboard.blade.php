@@ -115,13 +115,11 @@
         }
     }
 
-    // กดปุ่มค้นหา / Enter
     searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         loadUsers(searchForm.action + '?q=' + encodeURIComponent(searchInput.value));
     });
 
-    // พิมพ์แล้วค้นหาเอง (รอหยุดพิมพ์ 0.3 วินาที จะได้ไม่ยิงทุกตัวอักษร)
     searchInput.addEventListener('input', () => {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => searchForm.requestSubmit(), 300);
