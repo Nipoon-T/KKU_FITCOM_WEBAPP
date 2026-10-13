@@ -175,27 +175,36 @@ class CommunityController extends Controller
             ->with('success', 'สร้าง Community สำเร็จ');
     }
 
-    // หน้ารายละเอียด Community (Guest ดูได้)
+    // หน้ารายละเอียด Community
     public function show(Community $community)
     {
         $user = auth()->user(); // ถ้ายังไม่ login จะเป็น null
 
-        $community->load([
-            'sport',
-            'creator.profile',
-            'approvedMembers.user.profile',
-            'activities' => fn ($query) => $query
-                ->with(['sport', 'location'])
-                ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
-                ->whereDate('date', '>=', now()->toDateString())
-                ->orderBy('date')
-                ->orderBy('start_time'),
-        ]);
-
-        // Guest (ไม่ได้ login) จะไม่มีสถานะสมาชิกใดๆ
+        // เช็คสถานะของผู้ดูก่อน "ดึงข้อมูลอื่น" ทุกอย่าง
         $membership = $user ? $community->membershipOf($user) : null;
         $isOwner = $user ? $community->isOwner($user) : false;
         $isApprovedMember = $user ? $community->isApprovedMember($user) : false;
+
+        // ดูรายละเอียดเต็มได้เมื่อ: กลุ่ม public หรือเป็นเจ้าของ/สมาชิกที่อนุมัติแล้ว
+        $canViewFull = $community->privacy !== 'private' || $isOwner || $isApprovedMember;
+
+        // ข้อมูลพื้นฐานที่ทุกคนเห็นได้: กีฬา + จำนวนสมาชิก (นับเลข ไม่ดึงรายชื่อ)
+        $community->load('sport');
+        $community->loadCount('approvedMembers');
+
+        // ข้อมูลละเอียด: ดึงเฉพาะคนที่มีสิทธิ์เท่านั้น
+        if ($canViewFull) {
+            $community->load([
+                'creator.profile',
+                'approvedMembers.user.profile',
+                'activities' => fn ($query) => $query
+                    ->with(['sport', 'location'])
+                    ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
+                    ->whereDate('date', '>=', now()->toDateString())
+                    ->orderBy('date')
+                    ->orderBy('start_time'),
+            ]);
+        }
 
         // โพสต์: ให้เห็นเฉพาะสมาชิกที่อนุมัติแล้ว
         $posts = $isApprovedMember
@@ -212,6 +221,7 @@ class CommunityController extends Controller
             'membership',
             'isOwner',
             'isApprovedMember',
+            'canViewFull',
             'posts',
             'pendingMembers',
         ));
