@@ -15,6 +15,7 @@
     .act-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
     .act-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; }
     .act-card h3 { font-size: 16px; }
+    .act-card p { font-size: 13px; color: #555; margin: 0; }
     .act-cover-empty { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; margin-bottom: 4px; background: #e6f6f9; }
     .act-card img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; margin-bottom: 4px; }
     .act-tag { display: inline-block; background: #e3f4f7; color: #3a9fb0; border-radius: 20px; padding: 2px 10px; font-size: 12px; width: fit-content; }
@@ -31,6 +32,7 @@
     .match-bar span.high { background: #34b36b; }
     .match-bar span.mid { background: #f0b429; }
     .match-bar span.low { background: #bbb; }
+    .section-title { font-size: 18px; margin: 28px 0 12px; }
 </style>
 @endsection
 
@@ -50,7 +52,45 @@
 
     <p class="act-sub">เรียงตามความเหมาะสมกับกีฬา เป้าหมาย ระดับ เวลา และสถานที่ในโปรไฟล์ของคุณ</p>
 
-    <p class="act-count">กิจกรรมแนะนำ ({{ $recommendations->count() }})</p>
+    {{-- ===== ส่วนที่ 1: Community ===== --}}
+    <h2 class="section-title" style="margin-top: 0;">Community ที่เหมาะกับคุณ ({{ $communities->count() }})</h2>
+
+    <div class="act-grid">
+        @forelse ($communities as $community)
+            @php
+                $score = (int) $community->match_score;
+                $tone = $score >= 70 ? 'high' : ($score >= 40 ? 'mid' : 'low');
+            @endphp
+
+            <div class="act-card">
+                @if ($community->cover_image)
+                    <img src="{{ asset('storage/'.$community->cover_image) }}" alt="{{ $community->name }}"
+                        style="object-position: {{ $community->cover_position ?? '50% 50%' }};">
+                @else
+                    <div class="act-cover-empty"></div>
+                @endif
+
+                <span class="match-badge {{ $tone }}">✨ Match {{ $score }}%</span>
+                <div class="match-bar"><span class="{{ $tone }}" style="width: {{ $score }}%"></span></div>
+
+                <h3>{{ $community->name }}</h3>
+
+                @if ($community->description)
+                    <p>{{ \Illuminate\Support\Str::limit($community->description, 100) }}</p>
+                @endif
+
+                <span class="act-tag">{{ $community->sport->name ?? '-' }} · {{ $community->privacy === 'private' ? '🔒 Private' : '🌐 Public' }}</span>
+                <p>👥 สมาชิก {{ $community->approved_members_count }} คน</p>
+
+                <a href="{{ route('community.show', $community) }}" class="btn outline">ดูรายละเอียด</a>
+            </div>
+        @empty
+            <p class="empty">ยังไม่มี Community แนะนำในตอนนี้</p>
+        @endforelse
+    </div>
+
+    {{-- ===== ส่วนที่ 2: กิจกรรม ===== --}}
+    <h2 class="section-title">กิจกรรมแนะนำ ({{ $recommendations->count() }})</h2>
 
     <div class="act-grid">
         @forelse ($recommendations as $activity)
@@ -87,7 +127,7 @@
 
                 <p>🙋 เข้าร่วมแล้ว: {{ $activity->registered_count ?? 0 }}/{{ $activity->max_participants }}</p>
 
-                <a href="{{ route('activities.show', ['activity' => $activity, 'from' => 'recommendations']) }}" class="btn outline"> ดูรายละเอียด</a>
+                <a href="{{ route('activities.show', ['activity' => $activity, 'from' => 'recommendations']) }}" class="btn outline">ดูรายละเอียด</a>
             </div>
         @empty
             <p class="empty">ยังไม่มีกิจกรรมแนะนำในตอนนี้</p>
