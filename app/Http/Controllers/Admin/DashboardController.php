@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\ActivityParticipant;
 use App\Models\Attendance;
+use App\Models\Community;
 use App\Models\PointLog;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -37,9 +38,12 @@ class DashboardController extends Controller
         $stats = [
             'users' => User::count(),
             'activities' => Activity::count(),
-            'registrations' => ActivityParticipant::count(),
+            'registrations_total' => ActivityParticipant::count(),
+            'registrations_active' => ActivityParticipant::where('status', 'registered')->count(),
+            'registrations_cancelled' => ActivityParticipant::where('status', 'cancelled')->count(),
             'checkins' => Attendance::count(),
             'points' => (int) PointLog::sum('points_change'),
+            'communities' => Community::count(),
         ];
 
         // กราฟ 14 วัน: สมาชิกใหม่ และจำนวนการเช็คชื่อ
