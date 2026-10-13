@@ -8,7 +8,11 @@
 
 @section('content')
 <div class="cm-wrap narrow">
-    <a href="{{ route('community.index') }}" class="back-link" onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }">← กลับ</a>
+    <a href="{{ route('community.index') }}" class="back-link"
+        onclick="var r = document.referrer;
+                    if (r.indexOf(location.origin) === 0 && !/\/(edit|manage)(\?|#|$)/.test(r)) {
+                        event.preventDefault(); history.back();
+                    }">← กลับ</a>
 
     {{-- ข้อความแจ้งผล --}}
     @if (session('success'))
