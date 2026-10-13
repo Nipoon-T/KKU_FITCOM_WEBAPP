@@ -60,67 +60,92 @@ function showMessage(text, type) {
 
 
 
-// ===== ย่อ + บีบอัดรูปปกในเบราว์เซอร์ ก่อนส่งไป server =====
-// ใช้ในหน้า create และ edit (หน้าอื่นที่ไม่มีช่องรูปปก โค้ดนี้จะไม่ทำงาน)
+// ===== ตัวนับตัวอักษร (ช่องที่มี data-counter) =====
+document.querySelectorAll('[data-counter]').forEach(function (field) {
+    const counter = document.getElementById(field.dataset.counter);
 
-const coverInput = document.getElementById('cover_image');       // ช่องเลือกไฟล์
-const coverData = document.getElementById('cover_image_data');   // hidden input เก็บรูปที่บีบแล้ว
-const coverPreview = document.getElementById('coverPreview');    // รูป preview
-const coverError = document.getElementById('coverError');        // ข้อความ error ฝั่ง JS
+    function update() {
+        counter.textContent = field.value.length; // จำนวนตัวอักษรปัจจุบัน
+    }
 
-const MAX_SIZE = 1200;   // ด้านที่ยาวที่สุดไม่เกิน 1200px (พอสำหรับรูปปก)
-const QUALITY = 0.8;     // คุณภาพ JPEG 0–1 (0.8 = ชัดพอ ไฟล์เล็ก)
+    field.addEventListener('input', update); // พิมพ์แล้วอัปเดต
+    update();                                 // แสดงค่าตอนเปิดหน้า (หน้า edit มีข้อความเดิม)
+});
 
-// ทำงานเฉพาะหน้าที่มีช่องรูปปก
-if (coverInput && coverData) {
+
+// ===== รูปปก: คลิกกล่องเพื่อเลือกรูป แล้วย่อ + บีบอัดก่อนส่ง =====
+const coverBox = document.getElementById('coverBox');                 // กล่องเส้นประ
+const coverInput = document.getElementById('cover_image');            // ช่องเลือกไฟล์ (ซ่อน)
+const coverData = document.getElementById('cover_image_data');        // hidden เก็บรูปที่บีบแล้ว
+const coverPreview = document.getElementById('coverPreview');         // รูป preview
+const coverPlaceholder = document.getElementById('coverPlaceholder'); // ข้อความ "คลิกเพื่ออัปโหลด"
+const coverPickBtn = document.getElementById('coverPickBtn');         // ปุ่ม "เปลี่ยนรูป"
+const coverError = document.getElementById('coverError');             // ข้อความ error
+
+const MAX_SIZE = 1200;  // ด้านที่ยาวที่สุดไม่เกิน 1200px
+const QUALITY = 0.8;    // คุณภาพ JPEG (0–1)
+
+// ทำงานเฉพาะหน้าที่มีกล่องรูปปก (create / edit)
+if (coverBox && coverInput && coverData) {
+
+    // คลิกที่กล่อง → เปิดหน้าต่างเลือกไฟล์
+    coverBox.addEventListener('click', function () {
+        coverInput.click();
+    });
+
+    // คลิกปุ่ม "เปลี่ยนรูป" → เปิดหน้าต่างเลือกไฟล์
+    coverPickBtn.addEventListener('click', function (e) {
+        e.stopPropagation(); // กันไม่ให้ไปเรียก click ของกล่องซ้ำ (หน้าต่างจะเปิด 2 รอบ)
+        coverInput.click();
+    });
+
+    // เมื่อเลือกไฟล์แล้ว
     coverInput.addEventListener('change', function () {
         const file = coverInput.files[0];
         coverError.textContent = ''; // ล้าง error เก่า
 
-        // ยกเลิกการเลือกไฟล์ → ล้างค่า
         if (!file) {
-            coverData.value = '';
-            coverPreview.style.display = 'none';
-            return;
+            return; // กดยกเลิก → ใช้รูปเดิมต่อ
         }
 
         // ไม่ใช่ไฟล์รูป → แจ้งเตือน
         if (!file.type.startsWith('image/')) {
             coverError.textContent = 'กรุณาเลือกไฟล์รูปภาพ';
             coverInput.value = '';
-            coverData.value = '';
             return;
         }
 
         const reader = new FileReader();
 
-        // 1) อ่านไฟล์เสร็จ → เอาไปโหลดเป็นรูป
+        // 1) อ่านไฟล์เสร็จ → โหลดเป็นรูป
         reader.onload = function (e) {
             const img = new Image();
 
-            // 2) โหลดรูปเสร็จ → ย่อขนาดด้วย canvas
+            // 2) โหลดรูปเสร็จ → ย่อด้วย canvas
             img.onload = function () {
-                // คำนวณอัตราย่อ: ถ้ารูปเล็กกว่า 1200px อยู่แล้ว ไม่ต้องย่อ (scale = 1)
+                // อัตราย่อ: รูปเล็กกว่า 1200px อยู่แล้ว = ไม่ย่อ (scale = 1)
                 const scale = Math.min(1, MAX_SIZE / img.width, MAX_SIZE / img.height);
                 const width = Math.round(img.width * scale);
                 const height = Math.round(img.height * scale);
 
-                // สร้าง canvas (กระดาษวาดรูปที่มองไม่เห็น) ตามขนาดใหม่
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
 
                 const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';            // ระบายพื้นขาวก่อน (PNG พื้นใสจะไม่กลายเป็นสีดำ)
+                ctx.fillStyle = '#ffffff';               // พื้นขาว (PNG พื้นใสจะไม่เป็นสีดำ)
                 ctx.fillRect(0, 0, width, height);
-                ctx.drawImage(img, 0, 0, width, height); // วาดรูปลงไปในขนาดใหม่
+                ctx.drawImage(img, 0, 0, width, height);
 
-                // 3) แปลงเป็น JPEG แบบบีบอัด → ได้ข้อความ "data:image/jpeg;base64,...."
+                // 3) แปลงเป็น JPEG แบบบีบอัด → ข้อความ Base64
                 const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
 
-                coverData.value = dataUrl;            // ใส่ใน hidden input เพื่อส่งไปกับฟอร์ม
-                coverPreview.src = dataUrl;           // แสดง preview ด้วยรูปที่บีบแล้ว
-                coverPreview.style.display = 'block';
+                // 4) ใส่ค่าส่งไปกับฟอร์ม + อัปเดตหน้าตากล่อง
+                coverData.value = dataUrl;
+                coverPreview.src = dataUrl;
+                coverPreview.style.display = 'block';    // แสดงรูป
+                coverPlaceholder.style.display = 'none'; // ซ่อนข้อความ "คลิกเพื่ออัปโหลด"
+                coverPickBtn.style.display = 'block';    // แสดงปุ่ม "เปลี่ยนรูป"
             };
 
             img.src = e.target.result;
