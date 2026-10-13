@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -280,7 +282,7 @@ class ActivityController extends Controller
         return [
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:300'],
-            'cover_image' => [$requireCover ? 'required' : 'nullable', 'image', 'max:5120'],
+            'cover_image_data' => [$requireCover ? 'required' : 'nullable', 'string'],
             'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'],
             'sport_id' => ['required', 'exists:sports,id'],
             'community_id' => ['nullable', Rule::exists('communities', 'id')->where('created_by', auth()->id())],
@@ -301,12 +303,20 @@ class ActivityController extends Controller
     {
         $coverImage = $activity?->cover_image;
         $coverPosition = $validated['cover_position'] ?? $activity->cover_position ?? '50% 50%';
-        if ($request->hasFile('cover_image')) {
+        if ($request->filled('cover_image_data')) {
+            $path = $this->saveCoverImage($request->input('cover_image_data'));
+
+            if ($path === null) {
+                throw ValidationException::withMessages([
+                    'cover_image_data' => 'รูปปกไม่ถูกต้อง กรุณาเลือกรูปใหม่',
+                ]);
+            }
+
             if ($coverImage) {
                 Storage::disk('public')->delete($coverImage);
             }
 
-            $coverImage = $request->file('cover_image')->store('activities', 'public');
+            $coverImage = $path;
             $coverPosition = $validated['cover_position'] ?? '50% 50%';
         }
 
@@ -324,6 +334,31 @@ class ActivityController extends Controller
             'end_time' => $validated['end_time'],
             'max_participants' => $validated['max_participants'],
         ];
+    }
+
+    // รับรูปปกที่ JS ย่อแล้วเป็น base64 (วิธีเดียวกับ Community) คืน path หรือ null ถ้าไม่ผ่าน
+    private function saveCoverImage(string $data): ?string
+    {
+        $prefix = 'data:image/jpeg;base64,';
+
+        if (! str_starts_with($data, $prefix)) {
+            return null;
+        }
+
+        $binary = base64_decode(substr($data, strlen($prefix)), true);
+        if ($binary === false || strlen($binary) > 2 * 1024 * 1024) {
+            return null;
+        }
+
+        $info = @getimagesizefromstring($binary);
+        if ($info === false || $info['mime'] !== 'image/jpeg') {
+            return null;
+        }
+
+        $path = 'activities/'.Str::random(40).'.jpg';
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
     }
 
     private function abortUnlessOwner(Activity $activity): void
@@ -360,4 +395,3 @@ class ActivityController extends Controller
 
         return back()->withErrors(['checkin' => $message]);
     }
-}
