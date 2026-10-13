@@ -11,8 +11,8 @@
         <label><input type="radio" name="target" value="activities" checked> กิจกรรม</label>
         <label><input type="radio" name="target" value="community"> คอมมูนิตี้</label>
     </div>
-    <input type="text" name="q" placeholder="ค้นหา"
-        style="width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 25px; font-size: 14px;">
+    <input type="text" name="q" placeholder="🔍 ค้นหากิจกรรม & คอมมูนิตี้ที่คุณชอบ"
+        style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fff;">
     </form>
 
     <script>
