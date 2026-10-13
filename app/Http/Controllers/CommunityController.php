@@ -11,31 +11,11 @@ use Illuminate\Support\Str; // ใช้สุ่มชื่อไฟล์ร�
 
 class CommunityController extends Controller
 {
-    // หน้ารวม Community ทั้งหมด + ค้นหา/กรอง
-    public function index(Request $request)
+    public function index()
     {
-        // เริ่มสร้างคำสั่ง query (ยังไม่ดึงข้อมูล)
-        $query = Community::with('sport')
-            ->withCount('approvedMembers'); // ได้ approved_members_count ไว้แสดงจำนวนสมาชิก
-
-        // ถ้ากรอกคำค้น → หาชื่อกลุ่มที่มีคำนั้นอยู่
-        if ($request->filled('q')) {
-            $query->where('name', 'like', '%'.$request->q.'%');
-        }
-
-        // ถ้าเลือกกีฬา → เอาเฉพาะกลุ่มกีฬานั้น
-        if ($request->filled('sport_id')) {
-            $query->where('sport_id', $request->sport_id);
-        }
-
-        // ถ้าเลือก public/private → กรองตามนั้น
-        if ($request->filled('privacy')) {
-            $query->where('privacy', $request->privacy);
-        }
-
-        $communities = $query->latest()->get(); // ดึงข้อมูลจริง ใหม่สุดก่อน
-
-        $sports = Sport::orderBy('name')->get(); // สำหรับ dropdown กรองกีฬา
+        $communities = Community::with('sport')
+            ->latest()
+            ->get();
 
         return view('community.index', compact('communities', 'sports'));
     }
@@ -48,32 +28,6 @@ class CommunityController extends Controller
         return view('community.create', compact('sports'));
     }
 
-    // หน้า "จัดการกลุ่มของฉัน"
-    public function mine()
-    {
-        $userId = auth()->id(); // id ของคนที่ล็อกอินอยู่
-
-        // 1) หา id ของกลุ่มที่ฉันเป็นเจ้าของ
-        $ownedIds = CommunityMember::where('user_id', $userId)
-            ->where('role', 'owner')
-            ->pluck('community_id'); // ได้รายการ id เช่น [3, 5]
-
-        // ดึงกลุ่มเหล่านั้น พร้อมนับสมาชิกและคำขอที่รออนุมัติ
-        $ownedCommunities = Community::whereIn('id', $ownedIds)
-            ->withCount(['approvedMembers', 'pendingMembers'])
-            ->latest()
-            ->get();
-
-        // 2) กลุ่มที่ฉันเข้าร่วม (เป็น member ทั้ง approved และ pending)
-        $memberships = CommunityMember::with('community.sport') // ดึงข้อมูลกลุ่ม + กีฬามาด้วย
-            ->where('user_id', $userId)
-            ->where('role', 'member')
-            ->get();
-
-        return view('community.mine', compact('ownedCommunities', 'memberships'));
-    }
-
-    // บันทึก Community ใหม่
     public function store(Request $request)
     {
         // ตรวจข้อมูลจากฟอร์ม ถ้าไม่ผ่าน Laravel จะเด้งกลับหน้าเดิมพร้อม error อัตโนมัติ
@@ -81,26 +35,15 @@ class CommunityController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'sport_id' => ['nullable', 'exists:sports,id'],
-            'cover_image_data' => ['nullable', 'string'], // รูปที่บีบแล้ว (ข้อความ Base64 จาก JS)
+            'cover_image' => ['nullable', 'image', 'max:5120'],
             'privacy' => ['required', 'in:public,private'],
         ]);
 
-        $validated['created_by'] = auth()->id(); // คนที่ล็อกอินอยู่คือผู้สร้าง
+        $validated['created_by'] = auth()->id();
 
-        unset($validated['cover_image_data']); // ไม่ใช่คอลัมน์ในตาราง เอาออกก่อนบันทึก
-
-        // ถ้ามีรูปปก → ตรวจและบันทึกด้วยฟังก์ชัน saveCoverImage (อยู่ท้ายไฟล์)
-        if ($request->filled('cover_image_data')) {
-            $path = $this->saveCoverImage($request->cover_image_data);
-
-            // รูปไม่ผ่านการตรวจ → กลับไปหน้าฟอร์มพร้อมข้อความ error
-            if ($path === null) {
-                return back()
-                    ->withErrors(['cover_image' => 'รูปปกไม่ถูกต้อง กรุณาเลือกรูปใหม่'])
-                    ->withInput();
-            }
-
-            $validated['cover_image'] = $path; // เก็บ path ไว้บันทึกลง DB
+        if ($request->hasFile('cover_image')) {
+            $validated['cover_image'] = $request->file('cover_image')
+                ->store('communities', 'public');
         }
 
         $community = Community::create($validated);
@@ -126,243 +69,12 @@ class CommunityController extends Controller
         $community->load([
             'sport',
             'creator',
-            'approvedMembers.user', // รายชื่อสมาชิกที่อนุมัติแล้ว
-            // กิจกรรมที่ยังไม่ถึงวัน เรียงจากใกล้ไปไกล (ตารางของคนที่ 3)
-            'activities' => fn ($query) => $query
-                ->whereDate('date', '>=', now()->toDateString())
-                ->orderBy('date')
-                ->orderBy('start_time'),
+            'activities',
+            'members.user',
+            'posts.user',
         ]);
 
-        $membership = $community->membershipOf($user);      // แถวสมาชิกของเรา (หรือ null)
-        $isOwner = $community->isOwner($user);              // เป็นเจ้าของไหม
-        $isApprovedMember = $community->isApprovedMember($user); // เป็นสมาชิกแล้วไหม
-
-        // โพสต์: ให้เห็นเฉพาะสมาชิกที่อนุมัติแล้ว
-        $posts = $isApprovedMember
-            ? $community->posts()->with('user')->latest('created_at')->get()
-            : collect(); // คนนอกได้รายการว่าง
-
-        // คำขอที่รออนุมัติ: ให้เห็นเฉพาะ owner
-        $pendingMembers = $isOwner
-            ? $community->pendingMembers()->with('user')->get()
-            : collect();
-
-        return view('community.show', compact(
-            'community',
-            'membership',
-            'isOwner',
-            'isApprovedMember',
-            'posts',
-            'pendingMembers',
-        ));
-    }
-
-    // ขอเข้าร่วมกลุ่ม
-    public function join(Community $community)
-    {
-        // กันสมัครซ้ำ: ถ้ามีแถวอยู่แล้วไม่ต้องสร้างใหม่
-        $existing = $community->membershipOf(auth()->user());
-
-        if ($existing) {
-            $message = $existing->status === 'approved'
-                ? 'คุณเป็นสมาชิกกลุ่มนี้อยู่แล้ว'
-                : 'คำขอของคุณกำลังรอการอนุมัติ';
-
-            return back()->with('error', $message);
-        }
-
-        // public = เข้าได้ทันที, private = ต้องรอ owner อนุมัติ
-        $isPublic = $community->privacy === 'public';
-
-        CommunityMember::create([
-            'community_id' => $community->id,
-            'user_id' => auth()->id(),
-            'role' => 'member',
-            'status' => $isPublic ? 'approved' : 'pending',
-        ]);
-
-        return back()->with('success', $isPublic
-            ? 'เข้าร่วมกลุ่มสำเร็จ'
-            : 'ส่งคำขอแล้ว รอเจ้าของกลุ่มอนุมัติ');
-    }
-
-    // ออกจากกลุ่ม (หรือยกเลิกคำขอที่ยัง pending)
-    public function leave(Community $community)
-    {
-        $membership = $community->membershipOf(auth()->user());
-
-        if (! $membership) {
-            return back()->with('error', 'คุณไม่ได้เป็นสมาชิกกลุ่มนี้');
-        }
-
-        // owner ออกไม่ได้ ไม่อย่างนั้นกลุ่มจะไม่มีคนดูแล
-        if ($membership->role === 'owner') {
-            return back()->with('error', 'เจ้าของกลุ่มไม่สามารถออกจากกลุ่มได้');
-        }
-
-        $membership->delete();
-
-        return back()->with('success', 'ออกจากกลุ่มแล้ว');
-    }
-
-    // owner อนุมัติคำขอ
-    public function approve(Community $community, CommunityMember $member)
-    {
-        $this->checkOwnerAndMember($community, $member); // เช็คสิทธิ์ก่อนทำ
-
-        $member->update(['status' => 'approved']);
-
-        $message = 'อนุมัติ '.$member->user->name.' แล้ว';
-
-        // ถ้าเรียกมาจาก JavaScript (AJAX) → ตอบเป็น JSON
-        if (request()->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
-
-        // ถ้าส่งจากฟอร์มปกติ → กลับหน้าเดิม (แบบเดิม)
-        return back()->with('success', $message);
-    }
-
-    // owner ปฏิเสธคำขอ (ลบแถวทิ้ง ผู้ใช้จะสมัครใหม่ได้)
-    public function reject(Community $community, CommunityMember $member)
-    {
-        $this->checkOwnerAndMember($community, $member);
-
-        $name = $member->user->name; // เก็บชื่อไว้ก่อนลบ
-        $member->delete();
-
-        $message = 'ปฏิเสธคำขอของ '.$name.' แล้ว';
-
-        if (request()->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
-
-        return back()->with('success', $message);
-    }
-
-    // โพสต์ข้อความในกลุ่ม
-    public function storePost(Request $request, Community $community)
-    {
-        // เฉพาะสมาชิกที่อนุมัติแล้ว คนอื่นได้หน้า 403
-        abort_unless($community->isApprovedMember(auth()->user()), 403);
-
-        $validated = $request->validate([
-            'content' => ['required', 'string', 'max:2000'],
-        ]);
-
-        $community->posts()->create([
-            'user_id' => auth()->id(),
-            'content' => $validated['content'],
-        ]);
-
-        return back()->with('success', 'โพสต์สำเร็จ');
-    }
-
-    // หน้าฟอร์มแก้ไขกลุ่ม (owner เท่านั้น)
-    public function edit(Community $community)
-    {
-        // ไม่ใช่เจ้าของ = ห้ามเข้า
-        abort_unless($community->isOwner(auth()->user()), 403);
-
-        $sports = Sport::orderBy('name')->get(); // ใช้ทำ dropdown กีฬา
-
-        return view('community.edit', compact('community', 'sports'));
-    }
-
-    // บันทึกการแก้ไข (owner เท่านั้น)
-    public function update(Request $request, Community $community)
-    {
-        abort_unless($community->isOwner(auth()->user()), 403);
-
-        // กฎเดียวกับตอนสร้าง
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'sport_id' => ['nullable', 'exists:sports,id'],
-            'cover_image_data' => ['nullable', 'string'],
-            'privacy' => ['required', 'in:public,private'],
-        ]);
-
-        unset($validated['cover_image_data']);
-
-        // ถ้าเลือกรูปใหม่ → บันทึกรูปใหม่ก่อน ถ้าสำเร็จค่อยลบรูปเก่า
-        if ($request->filled('cover_image_data')) {
-            $path = $this->saveCoverImage($request->cover_image_data);
-
-            if ($path === null) {
-                return back()
-                    ->withErrors(['cover_image' => 'รูปปกไม่ถูกต้อง กรุณาเลือกรูปใหม่'])
-                    ->withInput();
-            }
-
-            if ($community->cover_image) {
-                Storage::disk('public')->delete($community->cover_image); // ลบรูปเก่า
-            }
-
-            $validated['cover_image'] = $path;
-        }
-
-        $community->update($validated); // บันทึกค่าใหม่ลง DB
-
-        return redirect()
-            ->route('community.show', $community)
-            ->with('success', 'แก้ไขข้อมูลกลุ่มแล้ว');
-    }
-
-    // ลบกลุ่ม (owner เท่านั้น)
-    public function destroy(Community $community)
-    {
-        abort_unless($community->isOwner(auth()->user()), 403);
-
-        // ลบไฟล์รูปปก (ถ้ามี)
-        if ($community->cover_image) {
-            Storage::disk('public')->delete($community->cover_image);
-        }
-
-        // ลบกลุ่ม → สมาชิกและโพสต์ถูกลบตาม (cascade ใน migration)
-        // กิจกรรมของคนที่ 3 ไม่ถูกลบ แค่ community_id กลายเป็น null
-        $community->delete();
-
-        return redirect()
-            ->route('community.index')
-            ->with('success', 'ลบกลุ่มแล้ว');
-    }
-
-    // ===== ตรวจและบันทึกรูปปกที่ส่งมาเป็นข้อความ Base64 =====
-    // คืนค่า path ของไฟล์ ถ้าสำเร็จ / คืนค่า null ถ้ารูปไม่ถูกต้อง
-    private function saveCoverImage(string $data): ?string
-    {
-        $prefix = 'data:image/jpeg;base64,';
-
-        // 1) ต้องขึ้นต้นด้วย data:image/jpeg;base64, (JS ของเราส่งแบบนี้เสมอ)
-        if (! str_starts_with($data, $prefix)) {
-            return null;
-        }
-
-        // 2) ตัดส่วนหัวออก แล้วแปลงข้อความกลับเป็นไฟล์รูป (true = ตรวจแบบเข้มงวด)
-        $binary = base64_decode(substr($data, strlen($prefix)), true);
-        if ($binary === false) {
-            return null;
-        }
-
-        // 3) ขนาดต้องไม่เกิน 2MB (หลังบีบแล้วปกติแค่หลักร้อย KB)
-        if (strlen($binary) > 2 * 1024 * 1024) {
-            return null;
-        }
-
-        // 4) ตรวจว่าเป็นรูป JPEG จริง (กันคนส่งไฟล์อื่นปลอมมา)
-        //    ใส่ @ ข้างหน้าเพื่อไม่ให้ PHP แสดง warning ถ้าไม่ใช่รูป
-        $info = @getimagesizefromstring($binary);
-        if ($info === false || $info['mime'] !== 'image/jpeg') {
-            return null;
-        }
-
-        // 5) ตั้งชื่อไฟล์แบบสุ่ม แล้วบันทึกลง storage/app/public/communities
-        $path = 'communities/'.Str::random(40).'.jpg';
-        Storage::disk('public')->put($path, $binary);
-
-        return $path;
+        return view('community.show', compact('community'));
     }
 
     // ===== ฟังก์ชันช่วยเช็คสิทธิ์ (ใช้ภายใน Controller นี้เท่านั้น) =====
