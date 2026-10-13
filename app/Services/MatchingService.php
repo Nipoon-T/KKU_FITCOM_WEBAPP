@@ -74,13 +74,13 @@ class MatchingService
             // กีฬาของกลุ่มตรงกับที่ user สนใจไหม
             $sportPart = in_array($community->sport_id, $mySportIds) ? 1 : 0;
 
-            // คะแนนเฉลี่ยของกิจกรรมในกลุ่ม (ไม่มีกิจกรรม = 0.5)
+            // คะแนนเฉลี่ยของกิจกรรมในกลุ่ม ไม่มีกิจกรรม = 0.5
             $activityPart = 0.5;
             if (isset($activityScores[$community->id])) {
                 $activityPart = $activityScores[$community->id] / 100;
             }
 
-            // น้ำหนักอ่านจากตาราง match_weights (ถ้ายังไม่มีใช้ค่า 0.6 / 0.4)
+            // น้ำหนักอ่านจากตาราง match_weights ถ้ายังไม่มีใช้ค่า 0.6 / 0.4
             $sportWeight = $weights['community_sport'] ?? 0.6;
             $activityWeight = $weights['community_activity'] ?? 0.4;
 
@@ -190,7 +190,7 @@ class MatchingService
         return 0;
     }
 
-    // 5) สถานที่ พื้นที่สะดวกในโปรไฟล์เก็บเป็นพิกัด "lat,lng" เลยเทียบระยะทางกับสถานที่จัดกิจกรรม
+    // 5) สถานที่ พื้นที่สะดวกในโปรไฟล์เก็บเป็นพิกัด lat,lng เลยเทียบระยะทางกับสถานที่จัดกิจกรรม
     private function locationScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->preferred_location || ! $activity->location) {
@@ -230,7 +230,7 @@ class MatchingService
         return 0;
     }
 
-    // ระยะทางระหว่าง 2 พิกัด หน่วยกิโลเมตร (สูตร Haversine)
+    // ระยะทางระหว่าง 2 พิกัด หน่วยกิโลเมตร สูตร Haversine
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
         $dLat = deg2rad($lat2 - $lat1);
