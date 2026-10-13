@@ -15,16 +15,18 @@ class BadgeSeeder extends Seeder
             ['name' => 'Fit Star', 'description' => 'ครบ 30 ครั้ง ระดับตำนาน ไม่มีใครต้าน', 'icon' => '🏆', 'condition_type' => 'total_activities', 'condition_value' => 30],
             ['name' => 'Fit Streak', 'description' => 'ต่อเนื่อง 3 วัน เริ่มติดแล้วสิ', 'icon' => '✨', 'condition_type' => 'streak_days', 'condition_value' => 3],
             ['name' => 'Unstoppable', 'description' => 'ต่อเนื่อง 7 วัน ไม่มีเบรก', 'icon' => '🔥', 'condition_type' => 'streak_days', 'condition_value' => 7],
+
+            // ===== เหรียญพิเศษ: ระบบไม่แจกเอง แอดมินมอบให้เท่านั้น =====
+            ['name' => 'นกฮูกใจดี', 'description' => 'รางวัลพิเศษจากแอดมิน: ช่วยเหลือเพื่อนในกิจกรรม', 'icon' => '🦉', 'condition_type' => 'manual', 'condition_value' => 0],
+            ['name' => 'ดาวเด่นประจำเดือน', 'description' => 'รางวัลพิเศษจากแอดมิน: สมาชิกดีเด่นของเดือน', 'icon' => '⭐', 'condition_type' => 'manual', 'condition_value' => 0],
         ];
 
         foreach ($badges as $badge) {
-            Badge::updateOrCreate(
-                [
-                    'condition_type' => $badge['condition_type'],
-                    'condition_value' => $badge['condition_value'],
-                ],
-                $badge
-            );
+            $key = $badge['condition_type'] === 'manual'
+                ? ['name' => $badge['name']]
+                : ['condition_type' => $badge['condition_type'], 'condition_value' => $badge['condition_value']];
+
+            Badge::updateOrCreate($key, $badge);
         }
     }
 }

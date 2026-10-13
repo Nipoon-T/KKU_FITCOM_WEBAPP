@@ -46,10 +46,11 @@
                     <button type="button" id="cover-pick-btn" class="cover-change-btn" style="display:none;">🖼️ เปลี่ยนรูป</button>
                 @endif
             </div>
-            <input type="file" id="cover_image" name="cover_image" accept="image/*" style="display:none;">
+            <input type="file" id="cover_image" accept="image/*" style="display:none;">
+            <input type="hidden" id="cover_image_data" name="cover_image_data" value="">
             <input type="hidden" id="cover_position" name="cover_position"
                 value="{{ old('cover_position', $activity?->cover_position ?? '50% 50%') }}">
-            @error('cover_image') <p class="field-err">{{ $message }}</p> @enderror
+            @error('cover_image_data') <p class="field-err">{{ $message }}</p> @enderror
             @error('cover_position') <p class="field-err">{{ $message }}</p> @enderror
         </div>
 
@@ -171,11 +172,54 @@
         }
     });
 
-    coverInput.addEventListener('change', () => {
-        const file = coverInput.files[0];
-        if (!file) return;
+    // ย่อ + บีบรูปในเบราว์เซอร์ก่อนส่ง (เหมือนที่ Community ทำ) กันรูปใหญ่เกิน limit ของ PHP แล้ว failed to upload
+    const COVER_MAX_SIZE = 1600;
+    const COVER_QUALITY = 0.82;
+    let coverCompressing = false;
+    const coverDataInput = document.getElementById('cover_image_data');
 
-        coverPreview.src = URL.createObjectURL(file);
+    function compressCover(file) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, COVER_MAX_SIZE / img.width, COVER_MAX_SIZE / img.height);
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+                URL.revokeObjectURL(url);
+                resolve(canvas.toDataURL('image/jpeg', COVER_QUALITY));
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('load failed')); };
+            img.src = url;
+        });
+    }
+
+    coverInput.addEventListener('change', async () => {
+        const original = coverInput.files[0];
+        if (!original) return;
+
+        coverCompressing = true;
+        let dataUrl;
+        try {
+            dataUrl = await compressCover(original);
+        } catch (err) {
+            coverInput.value = '';
+            coverDataInput.value = '';
+            coverCompressing = false;
+            alert('ไม่สามารถอ่านรูปนี้ได้ กรุณาเลือกรูป JPG/PNG อื่น');
+            return;
+        }
+        coverCompressing = false;
+        coverDataInput.value = dataUrl;
+
+        coverPreview.src = dataUrl;
         coverPreview.style.display = 'block';
         coverPreview.style.objectPosition = '50% 50%';
         coverPositionInput.value = '50% 50%';
@@ -239,7 +283,12 @@
     const form = document.querySelector('.act-form');
 
     form.addEventListener('submit', (event) => {
-        if (isCreating && coverInput.files.length === 0) {
+        if (coverCompressing) {
+            event.preventDefault();
+            alert('กำลังย่อรูปปก กรุณารอสักครู่แล้วกดอีกครั้ง');
+            return;
+        }
+        if (isCreating && coverDataInput.value === '') {
             event.preventDefault();
             coverBox.style.borderColor = '#d9534f';
             alert('กรุณาเลือกรูปปกกิจกรรมก่อนสร้าง');
