@@ -218,6 +218,33 @@ class ActivityController extends Controller
         return $this->registerResult($request, 'ลงทะเบียนสำเร็จ', true, $registeredCount + 1);
     }
 
+    public function cancel(Activity $activity): RedirectResponse
+    {
+        // หาการลงทะเบียนของเราในกิจกรรมนี้
+        $participant = $activity->participants()
+            ->where('user_id', auth()->id())
+            ->where('status', 'registered')
+            ->first();
+
+        if ($participant === null) {
+            return back()->withErrors(['activity' => 'คุณยังไม่ได้ลงทะเบียนกิจกรรมนี้']);
+        }
+
+        // เช็คชื่อแล้ว → ยกเลิกไม่ได้
+        if ($participant->attendance) {
+            return back()->withErrors(['activity' => 'เช็คชื่อแล้ว ยกเลิกไม่ได้']);
+        }
+
+        // กิจกรรมจบแล้ว → ยกเลิกไม่ได้
+        if ($this->hasEnded($activity)) {
+            return back()->withErrors(['activity' => 'กิจกรรมนี้จบไปแล้ว']);
+        }
+
+        $participant->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'ยกเลิกการเข้าร่วมแล้ว');
+    }
+
     public function myActivities(): View
     {
         $activities = Activity::where('created_by', auth()->id())
