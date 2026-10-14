@@ -92,7 +92,7 @@
 
         <div class="pf-card">
             <label class="pf-label" for="bio">เกี่ยวกับฉัน</label>
-            <textarea name="bio" id="bio" rows="3" class="pf-input">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
+            <textarea name="bio" id="bio" maxlength="500" rows="3" class="pf-input">{{ old('bio', $user->profile->bio ?? '') }}</textarea>
         </div>
 
         <div class="pf-card">
