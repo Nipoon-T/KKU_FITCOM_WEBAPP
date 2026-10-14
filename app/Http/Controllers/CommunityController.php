@@ -347,7 +347,7 @@ class CommunityController extends Controller
         // กฎเดียวกับตอนสร้าง
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:500'],
             'sport_id' => ['nullable', 'exists:sports,id'],
             'cover_image_data' => ['nullable', 'string'],
             'cover_position' => ['nullable', 'string', 'regex:/^\d{1,3}% \d{1,3}%$/'], // ต้องเป็นรูปแบบ "50% 30%"

@@ -6,6 +6,8 @@ use App\Models\Sport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -25,14 +27,29 @@ class ProfileController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        // รายการช่วงเวลาว่างที่ถูกต้อง เช่น "1_06:00-11:59"
+        $days = ['0', '1', '2', '3', '4', '5', '6'];
+        $timeSlots = ['06:00-11:59', '12:00-17:59', '18:00-20:59'];
+        $allowedSlots = [];
+        foreach ($days as $day) {
+            foreach ($timeSlots as $timeSlot) {
+                $allowedSlots[] = $day.'_'.$timeSlot;
+            }
+        }
+
         $request->validate([
-            'goal' => 'nullable|string',
-            'skill_level' => 'nullable|string',
-            'preferred_location' => 'nullable|string',
-            'bio' => 'nullable|string',
-            'sports' => 'nullable|array',
-            'sports.*' => 'exists:sports,id',
-            'availability' => 'nullable|array',
+            'goal' => ['nullable', Rule::in(['ลดน้ำหนัก', 'เพิ่มกล้ามเนื้อ', 'สุขภาพทั่วไป', 'เข้าสังคม/หาเพื่อน', 'อื่นๆ'])],
+            'skill_level' => ['nullable', Rule::in(['เริ่มต้น', 'ปานกลาง', 'ผู้เชี่ยวชาญ'])],
+            'preferred_location' => ['nullable', Rule::in([
+                '16.476583,102.818127',
+                '16.469000,102.822000',
+                '16.417086,102.835127',
+            ])],
+            'bio' => ['nullable', 'string', 'max:500'],
+            'sports' => ['nullable', 'array'],
+            'sports.*' => ['exists:sports,id'],
+            'availability' => ['nullable', 'array'],
+            'availability.*' => [Rule::in($allowedSlots)],
             // Base64 ของรูป 2MB ยาวประมาณ 2.8 ล้านตัวอักษร
             'avatar_data' => ['nullable', 'string', 'max:3000000'],
         ]);
@@ -108,7 +125,7 @@ class ProfileController extends Controller
         }
 
         // 5) บันทึกลง storage/app/public/avatars
-        $path = 'avatars/'.$userId.'-'.time().'.jpg';
+        $path = 'avatars/'.$userId.'-'.Str::random(20).'.jpg';
         Storage::disk('public')->put($path, $binary);
 
         return $path;

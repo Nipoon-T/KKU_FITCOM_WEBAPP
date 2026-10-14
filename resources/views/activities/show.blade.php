@@ -67,9 +67,19 @@
         <p>👤 <strong>ผู้เข้าร่วม:</strong> <span id="participant-count">{{ $registeredCount }}</span>/{{ $activity->max_participants }}</p>
     </div>
 
-    <div class="detail-card status-box">
-        @if ($myParticipation?->status === 'registered')
+        <div class="detail-card status-box">
+        @if (auth()->check() && (int) $activity->created_by === (int) auth()->id())
+            {{-- ผู้จัด: ไม่ต้องแสดงปุ่มเข้าร่วม --}}
+            <p>👑 คุณเป็นผู้จัดกิจกรรมนี้</p>
+        @elseif ($myParticipation?->status === 'registered')
             <p>✅ เข้าร่วมแล้ว</p>
+            @if (! $activity->date->lt(today()) && ! $myParticipation->attendance)
+                <form action="{{ route('activities.cancel', $activity) }}" method="POST"
+                      onsubmit="return confirm('ต้องการยกเลิกการเข้าร่วมใช่มั้ย?')">
+                    @csrf
+                    <button type="submit" class="btn outline">ยกเลิกการเข้าร่วม</button>
+                </form>
+            @endif
         @elseif ($activity->date->lt(today()))
             <p>กิจกรรมนี้จบไปแล้ว</p>
         @elseif ($registeredCount >= $activity->max_participants)
@@ -85,6 +95,10 @@
                    style="display: none; margin-top: 8px; color: #d9534f; font-weight: normal;">
                     กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
                 </p>
+            @elseif ($membersOnly)
+                {{-- กลุ่มไพรเวท + ยังไม่ใช่สมาชิก: ไม่แสดงปุ่มเข้าร่วม --}}
+                <p>🔒 กลุ่มไพรเวท ต้องเป็นสมาชิกก่อน</p>
+                <a href="{{ route('community.show', $activity->community) }}" class="btn outline">ไปหน้ากลุ่มเพื่อขอเข้าร่วม</a>
             @else
                 <form action="{{ route('activities.register', $activity) }}" method="POST" id="register-form">
                     @csrf
@@ -132,9 +146,8 @@
                     document.getElementById('participant-count').textContent = data.count;
                 }
 
-                form.replaceWith(Object.assign(document.createElement('p'), {
-                    textContent: '✅ เข้าร่วมแล้ว',
-                }));
+                window.location.reload();
+
             } else {
                 message.textContent = data.message;
                 message.style.display = 'block';

@@ -21,7 +21,7 @@ use Illuminate\View\View;
 class ActivityController extends Controller
 {
     private const LEVELS = [
-        1 => 'ง่าย',
+        1 => 'เริ่มต้น',
         2 => 'ปานกลาง',
         3 => 'เชี่ยวชาญ',
     ];
@@ -70,6 +70,17 @@ class ActivityController extends Controller
             $query->where('end_time', '<=', $request->input('to'));
         }
 
+        $user = auth()->user();
+
+        $query->where(function ($q) use ($user) {
+            $q->whereNull('community_id')
+                ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'));
+
+            if ($user) {
+                $q->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            }
+        });
+
         $activities = $query->orderBy('date')->orderBy('start_time')->get();
         $sports = Sport::orderBy('name')->get();
         $levels = self::LEVELS;
@@ -103,8 +114,9 @@ class ActivityController extends Controller
         $registeredCount = $activity->participants()->where('status', 'registered')->count();
         $myParticipation = $activity->participants()->where('user_id', auth()->id())->first();
         $levels = self::LEVELS;
+        $membersOnly = $this->isLockedForUser($activity);
 
-        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels'));
+        return view('activities.show', compact('activity', 'registeredCount', 'myParticipation', 'levels', 'membersOnly'));
     }
 
     public function edit(Activity $activity): View
@@ -174,6 +186,13 @@ class ActivityController extends Controller
     public function register(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
+        // ผู้จัดลงทะเบียนกิจกรรมของตัวเองไม่ได้ (กันเช็คชื่อตัวเองเพื่อเก็บแต้ม)
+        if ((int) $activity->created_by === (int) $userId) {
+            return $this->registerResult($request, 'คุณเป็นผู้จัดกิจกรรมนี้ ไม่ต้องลงทะเบียน', false);
+        }
+        if ($this->isLockedForUser($activity)) {
+            return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
+        }
 
         $existing = $activity->participants()->where('user_id', $userId)->first();
 
@@ -197,6 +216,33 @@ class ActivityController extends Controller
         );
 
         return $this->registerResult($request, 'ลงทะเบียนสำเร็จ', true, $registeredCount + 1);
+    }
+
+    public function cancel(Activity $activity): RedirectResponse
+    {
+        // หาการลงทะเบียนของเราในกิจกรรมนี้
+        $participant = $activity->participants()
+            ->where('user_id', auth()->id())
+            ->where('status', 'registered')
+            ->first();
+
+        if ($participant === null) {
+            return back()->withErrors(['activity' => 'คุณยังไม่ได้ลงทะเบียนกิจกรรมนี้']);
+        }
+
+        // เช็คชื่อแล้ว → ยกเลิกไม่ได้
+        if ($participant->attendance) {
+            return back()->withErrors(['activity' => 'เช็คชื่อแล้ว ยกเลิกไม่ได้']);
+        }
+
+        // กิจกรรมจบแล้ว → ยกเลิกไม่ได้
+        if ($this->hasEnded($activity)) {
+            return back()->withErrors(['activity' => 'กิจกรรมนี้จบไปแล้ว']);
+        }
+
+        $participant->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'ยกเลิกการเข้าร่วมแล้ว');
     }
 
     public function myActivities(): View
@@ -240,6 +286,11 @@ class ActivityController extends Controller
         $participant = $activity->participants()
             ->where('status', 'registered')
             ->findOrFail((int) $validated['participant_id']);
+
+        // ผู้จัดเช็คชื่อตัวเองไม่ได้ (กันฟาร์มแต้ม)
+        if ((int) $participant->user_id === (int) $activity->created_by) {
+            return $this->checkinDenied($request, 'ผู้จัดเช็คชื่อตัวเองไม่ได้');
+        }
 
         if (! $this->isActivityDay($activity)) {
             return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรมเท่านั้น');
@@ -336,7 +387,6 @@ class ActivityController extends Controller
         ];
     }
 
-    // รับรูปปกที่ JS ย่อแล้วเป็น base64 (วิธีเดียวกับ Community) คืน path หรือ null ถ้าไม่ผ่าน
     private function saveCoverImage(string $data): ?string
     {
         $prefix = 'data:image/jpeg;base64,';
@@ -364,6 +414,17 @@ class ActivityController extends Controller
     private function abortUnlessOwner(Activity $activity): void
     {
         abort_unless((int) $activity->created_by === (int) auth()->id(), 403);
+    }
+
+    private function isLockedForUser(Activity $activity): bool
+    {
+        $community = $activity->community;
+
+        if ($community === null || $community->privacy !== 'private') {
+            return false;
+        }
+
+        return ! $community->isApprovedMember(auth()->user());
     }
 
     private function hasEnded(Activity $activity): bool

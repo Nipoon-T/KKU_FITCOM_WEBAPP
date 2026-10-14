@@ -59,6 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/activities/{activity}', [ActivityController::class, 'update'])->name('activities.update');
     Route::delete('/activities/{activity}', [ActivityController::class, 'destroy'])->name('activities.destroy');
     Route::post('/activities/{activity}/register', [ActivityController::class, 'register'])->name('activities.register');
+    Route::post('/activities/{activity}/cancel', [ActivityController::class, 'cancel'])->name('activities.cancel');
     Route::get('/activities/{activity}/attendance', [ActivityController::class, 'attendance'])->name('activities.attendance');
     Route::post('/activities/{activity}/checkin', [ActivityController::class, 'checkin'])->name('activities.checkin');
     Route::get('/recommendations', [MatchingController::class, 'index'])->name('recommendations.index');

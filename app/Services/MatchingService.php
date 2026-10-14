@@ -13,6 +13,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 class MatchingService
 {
+    // น้ำหนักเริ่มต้น ใช้เมื่อในตาราง match_weights ยังไม่มีแถวนั้น กันไว้ถ้ายังไม่ได้รัน seeder
+    private const DEFAULT_WEIGHTS = [
+        'sport_match' => 0.30,
+        'goal_match' => 0.20,
+        'skill_match' => 0.20,
+        'time_overlap' => 0.15,
+        'location_match' => 0.15,
+        'community_sport' => 0.60,
+        'community_activity' => 0.40,
+    ];
+
     // คำนวณ % match ของกิจกรรมทุกอัน ให้ user ที่ล็อกอินอยู่
     /**
      * @return Collection<int, Activity>
@@ -21,27 +32,25 @@ class MatchingService
     {
         $profile = $user->profile;
         $mySportIds = $user->sports->pluck('id')->toArray();
-        $weights = MatchWeight::pluck('weight_value', 'factor_name');
+        $weights = $this->getWeights();
 
         // ซ่อนเฉพาะกิจกรรมที่ user ยังลงทะเบียนอยู่ ซึ่งยกเลิกแล้วยังเห็น
         $activities = Activity::with(['sport', 'location', 'community'])
             ->withCount(['participants as registered_count' => fn ($q) => $q->where('status', 'registered')])
             ->whereDate('date', '>=', today())
+            ->where(function ($q) use ($user) {
+                // ไม่สังกัดกลุ่ม หรือกลุ่มไม่ใช่ private หรือเราเป็นสมาชิกที่อนุมัติแล้ว
+                $q->whereNull('community_id')
+                    ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'))
+                    ->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            })
             ->whereDoesntHave('participants', function ($q) use ($user) {
                 $q->where('user_id', $user->id)->where('status', 'registered');
             })
             ->get();
 
         foreach ($activities as $activity) {
-            $score = 0;
-            $score += $this->sportScore($activity, $mySportIds) * $weights['sport_match'];
-            $score += $this->goalScore($activity, $profile) * $weights['goal_match'];
-            $score += $this->skillScore($activity, $profile) * $weights['skill_match'];
-            $score += $this->timeScore($activity, $user) * $weights['time_overlap'];
-            $score += $this->locationScore($activity, $profile) * $weights['location_match'];
-
-            // แปลงเป็นเปอร์เซ็นต์ 0-100 แล้วแปะไว้ที่กิจกรรม
-            $activity->setAttribute('match_score', round($score * 100));
+            $activity->setAttribute('match_score', $this->scoreActivity($activity, $user, $profile, $mySportIds, $weights));
         }
 
         return $activities->sortByDesc('match_score')->values();
@@ -53,13 +62,29 @@ class MatchingService
      */
     public function getCommunityRecommendations(User $user): Collection
     {
+        $profile = $user->profile;
         $mySportIds = $user->sports->pluck('id')->toArray();
-        $weights = MatchWeight::pluck('weight_value', 'factor_name');
+        $weights = $this->getWeights();
 
-        // เอาคะแนนกิจกรรมที่คำนวณไว้แล้ว มาเฉลี่ยแยกตามกลุ่ม
+        // คะแนนกิจกรรมของกลุ่ม = ค่าเฉลี่ยคะแนนของกิจกรรมที่ยังไม่จบทั้งหมดในกลุ่มนั้น
+        // นับรวมกิจกรรมที่ user ลงทะเบียนแล้วด้วย เพราะวัดว่ากลุ่มนี้จัดกิจกรรมที่เหมาะกับ user แค่ไหน
+        $groupActivities = Activity::with(['sport', 'location'])
+            ->whereNotNull('community_id')
+            ->whereDate('date', '>=', today())
+            ->where(function ($q) use ($user) {
+                $q->whereNull('community_id')
+                    ->orWhereHas('community', fn ($c) => $c->where('privacy', '!=', 'private'))
+                    ->orWhereHas('community.approvedMembers', fn ($m) => $m->where('user_id', $user->id));
+            })
+            ->get();
+
         $activityScores = [];
-        foreach ($this->getRecommendations($user)->groupBy('community_id') as $communityId => $list) {
-            $activityScores[$communityId] = $list->avg('match_score');
+        foreach ($groupActivities->groupBy('community_id') as $communityId => $list) {
+            $sum = 0;
+            foreach ($list as $activity) {
+                $sum += $this->scoreActivity($activity, $user, $profile, $mySportIds, $weights);
+            }
+            $activityScores[$communityId] = $sum / $list->count();
         }
 
         // ซ่อนกลุ่มที่เป็นสมาชิกอยู่ หรือส่งคำขอรออนุมัติอยู่
@@ -70,8 +95,12 @@ class MatchingService
             })
             ->get();
 
+        $sportWeight = $weights['community_sport'];
+        $activityWeight = $weights['community_activity'];
+        $totalWeight = $sportWeight + $activityWeight;
+
         foreach ($communities as $community) {
-            // กีฬาของกลุ่มตรงกับที่ user สนใจไหม
+            // กีฬาของกลุ่มตรงกับที่ user สนใจมั้ย
             $sportPart = in_array($community->sport_id, $mySportIds) ? 1 : 0;
 
             // คะแนนเฉลี่ยของกิจกรรมในกลุ่ม ไม่มีกิจกรรม = 0.5
@@ -80,15 +109,57 @@ class MatchingService
                 $activityPart = $activityScores[$community->id] / 100;
             }
 
-            // น้ำหนักอ่านจากตาราง match_weights ถ้ายังไม่มีใช้ค่า 0.6 / 0.4
-            $sportWeight = $weights['community_sport'] ?? 0.6;
-            $activityWeight = $weights['community_activity'] ?? 0.4;
+            $score = 0;
+            if ($totalWeight > 0) {
+                // หารด้วยผลรวมน้ำหนัก ถึงแอดมินตั้งรวมไม่เป็น 1 คะแนนก็ไม่เกิน 100
+                $score = (($sportPart * $sportWeight) + ($activityPart * $activityWeight)) / $totalWeight;
+            }
 
-            $score = ($sportPart * $sportWeight) + ($activityPart * $activityWeight);
             $community->setAttribute('match_score', round($score * 100));
         }
 
         return $communities->sortByDesc('match_score')->values();
+    }
+
+    // อ่านน้ำหนักจากตาราง match_weights ตัวไหนไม่มีให้ใช้ค่าเริ่มต้นแทน
+    /**
+     * @return array<string, float>
+     */
+    private function getWeights(): array
+    {
+        $weights = self::DEFAULT_WEIGHTS;
+
+        foreach (MatchWeight::pluck('weight_value', 'factor_name') as $name => $value) {
+            $weights[$name] = (float) $value;
+        }
+
+        return $weights;
+    }
+
+    // คะแนน % ของกิจกรรม 1 อัน รวม 5 ปัจจัยตามน้ำหนัก
+    /**
+     * @param  array<int, mixed>  $mySportIds
+     * @param  array<string, float>  $weights
+     */
+    private function scoreActivity(Activity $activity, User $user, ?UserProfile $profile, array $mySportIds, array $weights): float
+    {
+        $score = 0;
+        $score += $this->sportScore($activity, $mySportIds) * $weights['sport_match'];
+        $score += $this->goalScore($activity, $profile) * $weights['goal_match'];
+        $score += $this->skillScore($activity, $profile) * $weights['skill_match'];
+        $score += $this->timeScore($activity, $user) * $weights['time_overlap'];
+        $score += $this->locationScore($activity, $profile) * $weights['location_match'];
+
+        // หารด้วยผลรวมน้ำหนัก ถ้ารวมได้ 1.00 ผลจะเท่าเดิม
+        $total = $weights['sport_match'] + $weights['goal_match'] + $weights['skill_match']
+            + $weights['time_overlap'] + $weights['location_match'];
+
+        if ($total <= 0) {
+            return 0;
+        }
+
+        // แปลงเป็นเปอร์เซ็นต์ 0-100
+        return round($score / $total * 100);
     }
 
     // 1) กีฬาตรงกับที่ user สนใจไหม ตรง = 1, ไม่ตรง = 0
@@ -104,7 +175,7 @@ class MatchingService
         return 0;
     }
 
-    // 2) เป้าหมาย goal เลือกจาก dropdown ในหน้าโปรไฟล์ (ลดน้ำหนัก, เพิ่มกล้ามเนื้อ, สุขภาพทั่วไป, ...)
+    // 2) เป้าหมาย goal เลือกจาก dropdown ในหน้าโปรไฟล์ ลดน้ำหนัก, เพิ่มกล้ามเนื้อ, สุขภาพทั่วไป บลาๆๆ
     private function goalScore(Activity $activity, ?UserProfile $profile): float
     {
         if (! $profile || ! $profile->goal) {
@@ -136,14 +207,12 @@ class MatchingService
 
         $text = $profile->skill_level;
 
-        if (str_contains($text, 'เริ่ม') || str_contains($text, 'มือใหม่')) {
+        if ($text == 'เริ่มต้น') {
             $level = 1;
-        } elseif (str_contains($text, 'กลาง')) {
+        } elseif ($text == 'ปานกลาง') {
             $level = 2;
-        } elseif (str_contains($text, 'สูง') || str_contains($text, 'เชี่ยวชาญ')) {
+        } elseif ($text == 'ผู้เชี่ยวชาญ') {
             $level = 3;
-        } elseif (is_numeric($text)) {
-            $level = (int) $text;
         } else {
             return 0.5;
         }
@@ -230,7 +299,7 @@ class MatchingService
         return 0;
     }
 
-    // ระยะทางระหว่าง 2 พิกัด หน่วยกิโลเมตร สูตร Haversine
+    // ระยะทางระหว่าง 2 พิกัด หน่วยกิโลเมตร จากสูตร Haversine
     private function distanceKm(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
         $dLat = deg2rad($lat2 - $lat1);
