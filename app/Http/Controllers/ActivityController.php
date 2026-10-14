@@ -21,7 +21,7 @@ use Illuminate\View\View;
 class ActivityController extends Controller
 {
     private const LEVELS = [
-        1 => 'ง่าย',
+        1 => 'เริ่มต้น',
         2 => 'ปานกลาง',
         3 => 'เชี่ยวชาญ',
     ];
@@ -186,7 +186,10 @@ class ActivityController extends Controller
     public function register(Request $request, Activity $activity): RedirectResponse|JsonResponse
     {
         $userId = auth()->id();
-
+        // ผู้จัดลงทะเบียนกิจกรรมของตัวเองไม่ได้ (กันเช็คชื่อตัวเองเพื่อเก็บแต้ม)
+        if ((int) $activity->created_by === (int) $userId) {
+            return $this->registerResult($request, 'คุณเป็นผู้จัดกิจกรรมนี้ ไม่ต้องลงทะเบียน', false);
+        }
         if ($this->isLockedForUser($activity)) {
             return $this->registerResult($request, 'กิจกรรมนี้สำหรับสมาชิกกลุ่มเท่านั้น', false);
         }
@@ -256,6 +259,11 @@ class ActivityController extends Controller
         $participant = $activity->participants()
             ->where('status', 'registered')
             ->findOrFail((int) $validated['participant_id']);
+
+        // ผู้จัดเช็คชื่อตัวเองไม่ได้ (กันฟาร์มแต้ม)
+        if ((int) $participant->user_id === (int) $activity->created_by) {
+            return $this->checkinDenied($request, 'ผู้จัดเช็คชื่อตัวเองไม่ได้');
+        }
 
         if (! $this->isActivityDay($activity)) {
             return $this->checkinDenied($request, 'เช็คชื่อได้เฉพาะวันที่จัดกิจกรรมเท่านั้น');

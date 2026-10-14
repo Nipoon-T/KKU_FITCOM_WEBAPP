@@ -85,6 +85,9 @@
                    style="display: none; margin-top: 8px; color: #d9534f; font-weight: normal;">
                     กรุณาเข้าสู่ระบบ <a href="{{ route('login') }}">เข้าสู่ระบบที่นี่</a>
                 </p>
+            @elseif ((int) $activity->created_by === (int) auth()->id())
+                {{-- ผู้จัด: ไม่ต้องแสดงปุ่มเข้าร่วม --}}
+                <p>👑 คุณเป็นผู้จัดกิจกรรมนี้</p>
             @elseif ($membersOnly)
                 {{-- กลุ่มไพรเวท + ยังไม่ใช่สมาชิก: ไม่แสดงปุ่มเข้าร่วม --}}
                 <p>🔒 กลุ่มไพรเวท ต้องเป็นสมาชิกก่อน</p>
