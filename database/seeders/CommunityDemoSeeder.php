@@ -13,6 +13,8 @@ use Illuminate\Database\Seeder;
 
 class CommunityDemoSeeder extends Seeder
 {
+    use CopiesDemoImages;
+
     // ข้อมูลเดโม่สำหรับโมดูล Community (รันซ้ำได้ ไม่สร้างซ้ำ)
     // รันด้วย: php artisan db:seed --class=CommunityDemoSeeder
     public function run(): void
@@ -118,6 +120,14 @@ class CommunityDemoSeeder extends Seeder
                         'created_by' => $community->created_by,
                     ]
                 );
+
+                // ใส่รูปปกกิจกรรมจาก demo-images (ชื่อไฟล์ = ชื่อกิจกรรม) ถ้ายังไม่มีรูป
+                if ($activity->cover_image === null) {
+                    $cover = $this->copyDemoImage($activity->name, 'activities');
+                    if ($cover !== null) {
+                        $activity->update(['cover_image' => $cover]);
+                    }
+                }
 
                 // ให้สมาชิกบางส่วนลงชื่อเข้าร่วมกิจกรรม (ไม่เกินจำนวนสูงสุด)
                 $participantLimit = min(2 + $a, count($approvedIds), $activity->max_participants);
