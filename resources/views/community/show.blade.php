@@ -31,11 +31,13 @@
     {{-- ===== รายละเอียดกลุ่ม ===== --}}
     <div class="detail-card">
         <h1>{{ $community->name }}</h1>
-        @if ($canViewFull)
-            <p class="desc">{{ $community->description ?: 'ไม่มีคำอธิบาย' }}</p>
-        @else
-            <p class="desc muted">🔒 กลุ่มส่วนตัว ขอเข้าร่วมเพื่อดูรายละเอียดและสมาชิก</p>
-        @endif
+        {{-- แสดงคำอธิบายกลุ่มให้ทุกคนเห็น (รวมกลุ่ม private) --}}
+        <p class="desc">{{ $community->description ?: 'ไม่มีคำอธิบาย' }}</p>
+
+        {{-- กลุ่ม private ที่ยังไม่ใช่สมาชิก: บอกว่าส่วนอื่นถูกซ่อนอยู่ --}}
+        @unless ($canViewFull)
+            <p class="muted">🔒 กลุ่มส่วนตัว ขอเข้าร่วมเพื่อดูสมาชิกและกิจกรรม</p>
+        @endunless
 
         <p>🏃 <strong>ประเภทกีฬา:</strong> {{ $community->sport?->name ?? 'ไม่ระบุ' }}</p>
         <p>{{ $community->privacy === 'private' ? '🔒' : '🌐' }} <strong>ความเป็นส่วนตัว:</strong>
